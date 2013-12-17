@@ -1733,7 +1733,12 @@
 			<field type="fixed" name="crc" longname="Checksum" size="2" showtemplate="FieldHex"/>
 		</fields>
 	</format>
-
+	
+	<encapsulation>
+		<switch expr="buf2int(dport)">
+			<case value="61440"> <nextproto proto="#uctp"/> </case>
+		</switch>
+	</encapsulation>
 
 	<visualization>
 		<showsumtemplate name="udp">
@@ -1983,6 +1988,16 @@
 		</showsumtemplate>
 
 	</visualization>
+</protocol>
+
+<protocol name="uctp" longname="UCTP (User Customized Tag Protocol)" >
+	<format>
+		<fields>
+			<field type="fixed" name="flag" longname="Function Flag" size="4" showtemplate="FieldDec"/>
+			<field type="fixed" name="tag" longname="{0x8000 40}" size="4" showtemplate="FieldDec"/>
+		</fields>
+	</format>
+	
 </protocol>
 
 <protocol name="defaultproto" longname="Other data" comment="Generic protocol that is called when no other protocols are available" showsumtemplate="defaultproto">

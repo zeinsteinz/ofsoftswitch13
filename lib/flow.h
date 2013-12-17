@@ -47,6 +47,7 @@ struct ofpbuf;
    In decreasing order by size, so that flow structures can be hashed or
    compared bytewise. */
 struct flow {
+    uint32_t utag;
     uint32_t nw_src;            /* IP source address. */
     uint32_t nw_dst;            /* IP destination address. */
     uint32_t in_port;           /* Input switch port. */
@@ -61,7 +62,7 @@ struct flow {
     uint8_t nw_proto;           /* IP protocol. */
     uint8_t pad[5];
 };
-BUILD_ASSERT_DECL(sizeof(struct flow) == 40);
+BUILD_ASSERT_DECL(sizeof(struct flow) == 44);
 
 int flow_extract(struct ofpbuf *, uint32_t in_port, struct flow *);
 

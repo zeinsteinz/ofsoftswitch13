@@ -130,13 +130,13 @@ struct ofl_match_tlv *
 oxm_match_lookup(uint32_t header, const struct ofl_match *omt)
 {
     struct ofl_match_tlv *f;
-
     HMAP_FOR_EACH_WITH_HASH(f, struct ofl_match_tlv, hmap_node, hash_int(header, 0),
     					    &omt->match_fields) {
         if (f->header == header) {
             return f;
         }
     }
+
     return NULL;
 }
 
@@ -448,6 +448,14 @@ parse_oxm_entry(struct ofl_match *match, const struct oxm_field *f,
         case OFI_OXM_OF_IPV6_EXTHDR_W:
             ofl_structs_match_put16m(match, f->header, ntohs(*((uint16_t*) value)),ntohs(*((uint16_t*) mask)));
             return 0;
+        case OFI_OXM_OF_USER_TAG:{
+            ofl_structs_match_put32(match, f->header, *((uint32_t*) value));
+            return 0;
+        }
+        case OFI_OXM_OF_USER_TAG_W:{
+            ofl_structs_match_put32m(match, f->header,*((uint32_t*) value),*((uint32_t*) mask));
+            return 0;
+        }
         case NUM_OXM_FIELDS:
             NOT_REACHED();
     }
@@ -737,7 +745,6 @@ int oxm_put_match(struct ofpbuf *buf, struct ofl_match *omt){
 
     /* Loop through the remaining fields */
     HMAP_FOR_EACH(oft, struct ofl_match_tlv, hmap_node, &omt->match_fields){
-
         if (is_requisite(oft->header))
             /*We already inserted  fields that are pre requisites to others */
              continue;
@@ -778,7 +785,8 @@ int oxm_put_match(struct ofpbuf *buf, struct ofl_match *omt){
                     memcpy(&value, oft->value,sizeof(uint32_t));
 					if(!has_mask)
 						if (oft->header == OXM_OF_IPV4_DST || oft->header == OXM_OF_IPV4_SRC
-							||oft->header == OXM_OF_ARP_SPA || oft->header == OXM_OF_ARP_TPA)
+							||oft->header == OXM_OF_ARP_SPA || oft->header == OXM_OF_ARP_TPA
+							||oft->header == OXM_OF_USER_TAG)
 							oxm_put_32(buf,oft->header, value);
 						else
 							oxm_put_32(buf,oft->header, htonl(value));

@@ -44,7 +44,7 @@ match_8(uint8_t *a, uint8_t *b) {
 /* Returns true if two masked 8 bit values match */
 static inline bool
 match_mask8(uint8_t *a, uint8_t *am, uint8_t *b) {
-    return ((~(am[0]) & (a[0] ^ b[0])) == 0);
+    return (((am[0]) & (a[0] ^ b[0])) == 0);
 }
 
 /* Returns true if two 16 bit values match */
@@ -61,8 +61,7 @@ match_mask16(uint8_t *a, uint8_t *am, uint8_t *b) {
     uint16_t *a1 = (uint16_t *) a;
     uint16_t *b1 = (uint16_t *) b;
     uint16_t *mask = (uint16_t *) am;
-
-    return (((~*mask) & (*a1 ^ *b1)) == 0);
+    return (((*mask) & (*a1 ^ *b1)) == 0);
 }
 
 /* Returns true if two 32 bit values match */
@@ -80,8 +79,7 @@ match_mask32(uint8_t *a, uint8_t *am, uint8_t *b) {
     uint32_t *a1 = (uint32_t *) a;
     uint32_t *b1 = (uint32_t *) b;
     uint32_t *mask = (uint32_t *) am;
-
-    return (((~*mask) & (*a1 ^ *b1)) == 0);
+    return (((*mask) & (*a1 ^ *b1)) == 0);
 }
 
 /* Returns true if two 48 bit values match */
@@ -103,7 +101,6 @@ static inline bool
 match_64(uint8_t *a, uint8_t *b) {
     uint64_t *a1 = (uint64_t *) a;
     uint64_t *b1 = (uint64_t *) b;
-
     return (*a1 == *b1);
 }
 
@@ -114,7 +111,7 @@ match_mask64(uint8_t *a, uint8_t *am, uint8_t *b) {
     uint64_t *b1 = (uint64_t *) b;
     uint64_t *mask = (uint64_t *) am;
 
-    return (((~*mask) & (*a1 ^ *b1)) == 0);
+    return (((*mask) & (*a1 ^ *b1)) == 0);
 }
 
 /* Returns true if two 128 bit values match */
@@ -155,6 +152,7 @@ packet_match(struct ofl_match *flow_match, struct ofl_match *packet){
         has_mask = OXM_HASMASK(f->header);
         field_len =  OXM_LENGTH(f->header);
         packet_header = f->header;
+
         flow_val = f->value;
         if (has_mask) {
             /* Clear the has_mask bit and divide the field_len by two in the packet field header */
@@ -247,6 +245,7 @@ packet_match(struct ofl_match *flow_match, struct ofl_match *packet){
                         return false;
                 }
                 else {
+                	//fprintf(stderr,"no mask\n");
                     if (!match_48(flow_val, packet_val))
                         return false;
                 }

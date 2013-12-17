@@ -1540,6 +1540,21 @@ parse_match(char *str, struct ofl_match_header **match) {
             else ofl_structs_match_put16(m, OXM_OF_IPV6_EXTHDR, ext_hdr);
             continue;
         }
+        /* User Tag */
+        if (strncmp(token, MATCH_USER_TAG KEY_VAL, strlen(MATCH_USER_TAG KEY_VAL)) == 0) {
+        	uint32_t user_tag;
+        	//uint32_t mask;
+			//if (parse32(token + strlen(MATCH_USER_TAG KEY_VAL), NULL, 0, 0xffffffff, &user_tag)) {
+			//	ofp_fatal(0, "Error parsing user_tag: %s.", token);
+			//}
+			//else ofl_structs_match_put32(m,OXM_OF_USER_TAG,user_tag);
+        	if (sscanf(token, MATCH_USER_TAG KEY_VAL "0x%"SCNx32"", (&user_tag)) != 1) {
+                ofp_fatal(0, "Error parsing %s: %s.", MATCH_USER_TAG, token);
+            }
+   	        else ofl_structs_match_put32(m, OXM_OF_USER_TAG, user_tag);
+			continue;
+        }
+
         ofp_fatal(0, "Error parsing match arg: %s.", token);
     }
     
@@ -1548,7 +1563,6 @@ parse_match(char *str, struct ofl_match_header **match) {
 
 static int
 parse_set_field(char *token, struct ofl_action_set_field *act) {
-
 
     if (strncmp(token, MATCH_DL_SRC KEY_VAL2, strlen(MATCH_DL_SRC KEY_VAL2)) == 0) {
         uint8_t* dl_src = xmalloc(6);
@@ -1823,6 +1837,17 @@ parse_set_field(char *token, struct ofl_action_set_field *act) {
         }
         return 0;
     }
+    if (strncmp(token, MATCH_USER_TAG KEY_VAL2, strlen(MATCH_USER_TAG KEY_VAL2)) == 0) {
+        uint32_t* user_tag = xmalloc(sizeof(uint32_t));
+        if (parse32(token + strlen(MATCH_USER_TAG KEY_VAL2), NULL, 0, 0xffffffff, user_tag)) {
+            ofp_fatal(0, "Error parsing user_tag: %s.", token);
+        }else{
+            act->field = (struct ofl_match_tlv*) malloc(sizeof(struct ofl_match_tlv));
+            act->field->header = OXM_OF_USER_TAG;
+            act->field->value = (uint8_t*) user_tag;
+        }
+        return 0;
+    }
     if (strncmp(token, MATCH_NW_SRC_IPV6 KEY_VAL2 , strlen(MATCH_NW_SRC_IPV6 KEY_VAL2)) == 0) {
             struct in6_addr *addr = (struct in6_addr*) malloc(sizeof(struct in6_addr));
             struct in6_addr mask;
@@ -1931,6 +1956,34 @@ parse_action(uint16_t type, char *str, struct ofl_action_header **act) {
                 ofp_fatal(0, "Error parsing ethertype in push_mpls/vlan/pbb action: %s.", str);
             }
             (*act) = (struct ofl_action_header *)a;
+            break;
+        }
+        case (OFPAT_PUSH_UCTP):{
+            struct ofl_action_push *a = xmalloc(sizeof(struct ofl_action_push));
+            if (sscanf(str, "0x%"SCNx16"", &(a->ethertype)) != 1) {
+                ofp_fatal(0, "Error parsing ethertype in push_uctp action: %s.", str);
+            }
+            (*act) = (struct ofl_action_header *)a;
+            break;
+        }
+        case (OFPAT_ENCAP_UCTP):{
+            struct ofl_action_push *a = xmalloc(sizeof(struct ofl_action_push));
+            if (sscanf(str, "0x%"SCNx16"", &(a->ethertype)) != 1) {
+                ofp_fatal(0, "Error parsing ethertype in encap_uctp action: %s.", str);
+            }
+            (*act) = (struct ofl_action_header *)a;
+            break;
+        }
+
+
+        case (OFPAT_POP_UCTP):{
+            struct ofl_action_header *a = xmalloc(sizeof(struct ofl_action_header));
+            (*act) = a;
+            break;
+        }
+        case (OFPAT_DECAP_UCTP):{
+            struct ofl_action_header *a = xmalloc(sizeof(struct ofl_action_header));
+            (*act) = a;
             break;
         }
         case (OFPAT_POP_VLAN):

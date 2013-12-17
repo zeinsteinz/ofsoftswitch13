@@ -14,7 +14,9 @@
 #include <netinet/in.h>
 #include <sys/time.h>
 #include <signal.h>
-
+// my adding
+#include <stdio.h>
+#include <time.h>
 
 #include "nbee_link.h"
 #include "oflib/oxm-match.h"
@@ -33,7 +35,6 @@ struct pcap_pkthdr * pkhdr;
 
 
 #define NETPDLFILE "customnetpdl.xml"
-
 
 static void
 sigint_handler(int sig_nr)
@@ -356,6 +357,7 @@ int nblink_extract_proto_fields(struct ofpbuf * pktin, _nbPDMLField * field, str
 
 extern "C" int nblink_packet_parse(struct ofpbuf * pktin,  struct ofl_match * pktout, struct protocols_std * pkt_proto)
 {
+
     protocol_reset(pkt_proto);
     pkhdr->caplen = pktin->size; //need this information
     pkhdr->len = pktin->size; //need this information
@@ -373,10 +375,11 @@ extern "C" int nblink_packet_parse(struct ofpbuf * pktin,  struct ofl_match * pk
     if (Decoder->DecodePacket(LinkLayerType, PacketCounter, pkhdr, (const unsigned char*) (pktin->data)) == nbFAILURE)
     {
         printf("\nError decoding a packet %s\n\n", Decoder->GetLastError());
+        fprintf(stderr, "\nError decoding a packet %s\n\n", Decoder->GetLastError());
         // Something went wrong
         return -1;
     }
-
+    //fprintf(stderr, "After decode\n");
     PDMLReader->GetCurrentPacket(&curr_packet);
 
     _nbPDMLProto * proto;
@@ -562,6 +565,14 @@ extern "C" int nblink_packet_parse(struct ofpbuf * pktin,  struct ofl_match * pk
             else if (protocol_Name.compare("sctp") == 0 && pkt_proto->sctp == NULL)
             {
                 pkt_proto->sctp = (struct sctp_header *) ((uint8_t*) pktin->data + proto->Position);
+            }
+
+            if (protocol_Name.compare("uctp") == 0 && pkt_proto->uctp == NULL)
+            {
+            	//fprintf(stderr,"enter uctp\n");
+                pkt_proto->uctp = (struct uctp_header *) ((uint8_t*) pktin->data + proto->Position);
+                PDMLReader->GetPDMLField(proto->Name, (char*) "tag", proto->FirstField, &field);
+                nblink_extract_proto_fields(pktin, field, pktout, OXM_OF_USER_TAG);
             }
 
             if (protocol_Name.compare("icmp") == 0 && pkt_proto->icmp == NULL){

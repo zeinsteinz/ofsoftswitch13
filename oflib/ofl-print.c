@@ -200,6 +200,10 @@ ofl_action_type_print(FILE *stream, uint16_t type) {
         case OFPAT_DEC_MPLS_TTL: {   fprintf(stream, "mpls_dec"); return; }
         case OFPAT_PUSH_VLAN: {      fprintf(stream, "vlan_psh"); return; }
         case OFPAT_POP_VLAN: {       fprintf(stream, "vlan_pop"); return; }
+        case OFPAT_PUSH_UCTP: {      fprintf(stream, "uctp_psh"); return; }
+        case OFPAT_POP_UCTP: {       fprintf(stream, "uctp_pop"); return; }
+        case OFPAT_ENCAP_UCTP: {     fprintf(stream, "encap_uctp"); return;}
+        case OFPAT_DECAP_UCTP: {     fprintf(stream, "decap_uctp"); return;}
         case OFPAT_PUSH_MPLS: {      fprintf(stream, "mpls_psh"); return; }
         case OFPAT_POP_MPLS: {       fprintf(stream, "mpls_pop"); return; }
         case OFPAT_SET_QUEUE: {      fprintf(stream, "queue"); return; }
@@ -267,6 +271,7 @@ ofl_oxm_type_print(FILE *stream, uint32_t type){
     case OXM_OF_PBB_ISID:           {fprintf(stream, "pbb_isid"); return; }
     case OXM_OF_TUNNEL_ID:          {fprintf(stream, "tunnel_id"); return; }
     case OXM_OF_IPV6_EXTHDR:        {fprintf(stream, "ipv6_exthdr"); return; }
+    case OXM_OF_USER_TAG:           {fprintf(stream, "user_tag"); return; }
     default: {                       fprintf(stream, "?(%d)", type); return; }    
     }
 

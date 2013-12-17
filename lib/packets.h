@@ -349,6 +349,15 @@ struct sctp_header {
 };
 BUILD_ASSERT_DECL(SCTP_HEADER_LEN == sizeof(struct sctp_header));
 
+#define UDP_TYPE_UCTP   61440
+
+#define UCTP_HEADER_LEN 8
+struct uctp_header {
+    uint32_t uctp_flag;
+    uint32_t uctp_tag;
+};
+BUILD_ASSERT_DECL(UCTP_HEADER_LEN == sizeof(struct uctp_header));
+
 #define ARP_HRD_ETHERNET 1
 #define ARP_PRO_IP 0x0800
 #define ARP_OP_REQUEST 1
@@ -417,6 +426,7 @@ struct protocols_std {
    struct arp_eth_header  * arp;
    struct tcp_header      * tcp;
    struct udp_header      * udp;
+   struct uctp_header     * uctp;
    struct sctp_header     * sctp;
    struct icmp_header     * icmp;
 };
@@ -436,6 +446,7 @@ protocol_reset(struct protocols_std *proto) {
     proto->sctp      = NULL;
     proto->icmp      = NULL;
     proto->pbb       = NULL;
+    proto->uctp      = NULL;
 }
 
 

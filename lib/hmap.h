@@ -36,6 +36,7 @@
 
 #include <stdbool.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "util.h"
 
 /* A hash map node, to be embedded inside the data structure being mapped. */
@@ -139,7 +140,9 @@ hmap_is_empty(const struct hmap *hmap)
 static inline void
 hmap_insert_fast(struct hmap *hmap, struct hmap_node *node, size_t hash)
 {
+
     struct hmap_node **bucket = &hmap->buckets[hash & hmap->mask];
+
     node->hash = hash;
     node->next = *bucket;
     *bucket = node;

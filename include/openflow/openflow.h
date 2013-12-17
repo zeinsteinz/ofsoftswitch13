@@ -327,7 +327,8 @@ enum oxm_ofb_match_fields {
     OFPXMT_OFB_MPLS_BOS = 36,       /* MPLS BoS bit. */
     OFPXMT_OFB_PBB_ISID = 37,       /* PBB I-SID. */
     OFPXMT_OFB_TUNNEL_ID = 38,      /* Logical Port Metadata. */
-    OFPXMT_OFB_IPV6_EXTHDR = 39     /* IPv6 Extension Header pseudo-field */
+    OFPXMT_OFB_IPV6_EXTHDR = 39,    /* IPv6 Extension Header pseudo-field */
+    OFPXMT_OFB_USER_TAG = 40             /* My adding match field */
 };
 
 /* The VLAN id is 12-bits, so we can use the entire 16 bits to indicate
@@ -452,6 +453,10 @@ enum ofp_action_type {
     OFPAT_SET_FIELD = 25,    /* Set a header field using OXM TLV format. */
     OFPAT_PUSH_PBB = 26,     /*Push a new PBB service tag (I-TAG) */
     OFPAT_POP_PBB = 27,      /* Pop the outer PBB service tag (I-TAG) */
+    OFPAT_PUSH_UCTP = 28,
+    OFPAT_POP_UCTP = 29,
+    OFPAT_ENCAP_UCTP = 30,
+    OFPAT_DECAP_UCTP = 31,
     OFPAT_EXPERIMENTER = 0xffff
 };
 

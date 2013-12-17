@@ -58,7 +58,6 @@ packet_handle_std_validate(struct packet_handle_std *handle) {
         free(iter);
     }
     ofl_structs_match_init(&handle->match);
-
     if (nblink_packet_parse(handle->pkt->buffer,&handle->match,
                             handle->proto) < 0)
         return;
@@ -75,6 +74,7 @@ packet_handle_std_validate(struct packet_handle_std *handle) {
 
 struct packet_handle_std *
 packet_handle_std_create(struct packet *pkt) {
+
 	struct packet_handle_std *handle = xmalloc(sizeof(struct packet_handle_std));
 	handle->proto = xmalloc(sizeof(struct protocols_std));
 	handle->pkt = pkt;
@@ -171,7 +171,7 @@ proto_print(FILE *stream, struct protocols_std *p) {
     fprintf(stream, "{%s%s%s%s%s%s%s%s%s}",
             pstr(p->eth, "eth"), pstr(p->vlan, ",vlan"), pstr(p->mpls, ",mpls"), pstr(p->ipv4, ",ipv4"),
             pstr(p->arp, ",arp"), pstr(p->tcp, ",tcp"), pstr(p->udp, ",udp"), pstr(p->sctp, ",sctp"),
-            pstr(p->icmp, ",icmp"));
+            pstr(p->icmp, ",icmp"), pstr(p->uctp, "uctp"));
 }
 
 char *
@@ -188,6 +188,7 @@ packet_handle_std_to_string(struct packet_handle_std *handle) {
 
 void
 packet_handle_std_print(FILE *stream, struct packet_handle_std *handle) {
+
     packet_handle_std_validate(handle);
 
     fprintf(stream, "{proto=");

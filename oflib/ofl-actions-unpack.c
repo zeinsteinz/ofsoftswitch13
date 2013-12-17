@@ -138,6 +138,8 @@ ofl_actions_unpack(struct ofp_action_header *src, size_t *len, struct ofl_action
         }
 
         case OFPAT_PUSH_VLAN: 
+        case OFPAT_PUSH_UCTP:
+        case OFPAT_ENCAP_UCTP:
         case OFPAT_PUSH_PBB:
         case OFPAT_PUSH_MPLS: {
             struct ofp_action_push *sa;
@@ -171,6 +173,8 @@ ofl_actions_unpack(struct ofp_action_header *src, size_t *len, struct ofl_action
         }
 
         case OFPAT_POP_VLAN: 
+        case OFPAT_POP_UCTP:
+        case OFPAT_DECAP_UCTP:
         case OFPAT_POP_PBB: {
             //ofp_action_header length was already checked
             *len -= sizeof(struct ofp_action_header);
@@ -302,10 +306,12 @@ ofl_actions_unpack(struct ofp_action_header *src, size_t *len, struct ofl_action
                 }
                 case 4:{
                     uint32_t v; 
-		    uint8_t field = OXM_FIELD(da->field->header);					
-		    if( field != 11 && field != 12 && field != 22 && field != 23)  
-		        v = htonl(*((uint32_t*) value));
-		    else v = *((uint32_t*) value);
+					uint8_t field = OXM_FIELD(da->field->header);
+					if( field != 11 && field != 12 && field != 22 && field != 23)
+						v = htonl(*((uint32_t*) value));
+					else v = *((uint32_t*) value);
+					fprintf(stderr,"enter unpack action\n");
+					fprintf(stderr,"%u\n",v);
                     memcpy(da->field->value , &v, OXM_LENGTH(da->field->header));
                     break;
                 }

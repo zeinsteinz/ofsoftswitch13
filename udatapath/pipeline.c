@@ -120,6 +120,7 @@ send_packet_to_controller(struct pipeline *pl, struct packet *pkt, uint8_t table
 
 void
 pipeline_process_packet(struct pipeline *pl, struct packet *pkt) {
+	//fprintf(stderr, "enter pipeline_process\n");
     struct flow_table *table, *next_table;
 
     if (VLOG_IS_DBG_ENABLED(LOG_MODULE)) {
@@ -168,7 +169,7 @@ pipeline_process_packet(struct pipeline *pl, struct packet *pkt) {
             /* Packet could be destroyed by a meter instruction */
             if (!pkt)
                 return;
-
+            //fprintf(stderr,"goto next\n");
             if (next_table == NULL) {
                /* Cookie field is set 0xffffffffffffffff
                 because we cannot associate it to any
@@ -474,6 +475,7 @@ execute_entry(struct pipeline *pl, struct flow_entry *entry,
             Write-Metadata
             Goto-Table
     */
+
     size_t i;
     struct ofl_instruction_header *inst;
 

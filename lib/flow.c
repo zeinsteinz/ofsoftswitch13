@@ -86,6 +86,12 @@ pull_udp(struct ofpbuf *packet)
     return ofpbuf_try_pull(packet, UDP_HEADER_LEN);
 }
 
+static struct uctp_header *
+pull_uctp(struct ofpbuf *packet)
+{
+    return ofpbuf_try_pull(packet, UCTP_HEADER_LEN);
+}
+
 static struct icmp_header *
 pull_icmp(struct ofpbuf *packet) 
 {
@@ -108,6 +114,7 @@ pull_vlan(struct ofpbuf *packet)
 int
 flow_extract(struct ofpbuf *packet, uint32_t in_port, struct flow *flow)
 {
+	fprintf(stderr, "enter flow_extract\n");
     struct ofpbuf b = *packet;
     struct eth_header *eth;
     int retval = 0;
@@ -188,6 +195,12 @@ flow_extract(struct ofpbuf *packet, uint32_t in_port, struct flow *flow)
                             flow->tp_src = udp->udp_src;
                             flow->tp_dst = udp->udp_dst;
                             packet->l7 = b.data;
+                            if(flow->tp_dst == UDP_TYPE_UCTP)
+                            {
+                            	const struct uctp_header *uctp = pull_uctp(&b);
+                            	flow->utag = uctp->uctp_tag;
+                            	packet->l7 = b.data;
+                            }
                         } else {
                             /* Avoid tricking other code into thinking that
                              * this packet has an L4 header. */
@@ -229,11 +242,11 @@ flow_print(FILE *stream, const struct flow *flow)
     fprintf(stream,
             "port %04x vlan-vid %04x vlan-pcp %02x src-mac "ETH_ADDR_FMT" "
             "dst-mac "ETH_ADDR_FMT" frm-type %04x ip-tos %02x ip-proto %02x "
-            "src-ip "IP_FMT" dst-ip "IP_FMT" tp-src %d tp-dst %d",
+            "src-ip "IP_FMT" dst-ip "IP_FMT" tp-src %d tp-dst %d utag %d",
             ntohs(flow->in_port), ntohs(flow->dl_vlan), flow->dl_vlan_pcp,
             ETH_ADDR_ARGS(flow->dl_src), ETH_ADDR_ARGS(flow->dl_dst),
             ntohs(flow->dl_type),
             flow->nw_tos, flow->nw_proto,
             IP_ARGS(&flow->nw_src), IP_ARGS(&flow->nw_dst),
-            ntohs(flow->tp_src), ntohs(flow->tp_dst));
+            ntohs(flow->tp_src), ntohs(flow->tp_dst)), ntohl(flow->utag);
 }

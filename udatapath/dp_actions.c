@@ -182,6 +182,7 @@ set_field(struct packet *pkt, struct ofl_action_set_field *act )
                 break;
             }
             case OXM_OF_TCP_SRC:{
+            	/// !!!Notice
                 struct tcp_header *tcp = pkt->handle_std->proto->tcp;
                 uint16_t *v = (uint16_t*) act->field->value;
                 *v = htons(*v);
@@ -191,6 +192,7 @@ set_field(struct packet *pkt, struct ofl_action_set_field *act )
                 break;
             }
             case OXM_OF_TCP_DST:{
+            	/// !!!Notice
                 struct tcp_header *tcp = pkt->handle_std->proto->tcp;
                 uint16_t *v = (uint16_t*) act->field->value;
                 *v = htons(*v);
@@ -200,6 +202,7 @@ set_field(struct packet *pkt, struct ofl_action_set_field *act )
                 break;
             }
             case OXM_OF_UDP_SRC:{
+            	/// !!!Notice
                 struct udp_header *udp = pkt->handle_std->proto->udp;
                 uint16_t *v = (uint16_t*) act->field->value;
                 *v = htons(*v);
@@ -208,6 +211,7 @@ set_field(struct packet *pkt, struct ofl_action_set_field *act )
                 break;
             }
             case OXM_OF_UDP_DST:{
+            	/// !!!Notice
                 struct udp_header *udp = pkt->handle_std->proto->udp;
                 uint16_t *v = (uint16_t*) act->field->value;
                 *v = htons(*v);
@@ -215,8 +219,18 @@ set_field(struct packet *pkt, struct ofl_action_set_field *act )
                 memcpy(&udp->udp_dst, v, OXM_LENGTH(act->field->header));
                 break;
             }
+            case OXM_OF_USER_TAG:{
+            	struct uctp_header *uctp = pkt->handle_std->proto->uctp;
+            	uint32_t *v = (uint32_t*) act->field->value;
+            	//*v = htonl(*v);
+            	// !!!Notice, not clever to use "*v = htonl(*v)"
+            	uint32_t val = htonl(*v);
+            	memcpy(&uctp->uctp_tag, &val, OXM_LENGTH(act->field->header));
+            	break;
+            }
             /*TODO recalculate SCTP checksum*/
             case OXM_OF_SCTP_SRC:{
+            	// !!!Notice
                 uint16_t *v = (uint16_t*) act->field->value;
                 *v = htons(*v);
                 memcpy(&pkt->handle_std->proto->sctp->sctp_src,
@@ -224,6 +238,7 @@ set_field(struct packet *pkt, struct ofl_action_set_field *act )
                 break;
             }
             case OXM_OF_SCTP_DST:{
+            	// !!!Notice
                 uint16_t *v = (uint16_t*) act->field->value;
                 *v = htons(*v);
                 memcpy(&pkt->handle_std->proto->sctp->sctp_dst,
@@ -522,6 +537,256 @@ pop_vlan(struct packet *pkt, struct ofl_action_header *act UNUSED) {
     }
 }
 
+static void
+push_uctp(struct packet *pkt, struct ofl_action_push *act){
+	//fprintf(stderr,"enter push_uctp\n");
+	// TODO Zoltan: if 802.3, check if new length is still valid
+    packet_handle_std_validate(pkt->handle_std);
+    if (pkt->handle_std->proto->udp != NULL) {
+
+    	struct eth_header  *eth, *new_eth;
+    	struct snap_header  *snap, *new_snap;
+    	struct vlan_header  *vlan, *new_vlan;
+    	//struct vlan_header     * vlan_last;
+    	struct mpls_header   *mpls, *new_mpls;
+    	//struct pbb_header   *pbb, new_pbb;
+    	struct ip_header   *ipv4, *new_ipv4;
+    	struct ipv6_header *ipv6, *new_ipv6;
+    	//struct arp_eth_header  *arp, new_arp;
+
+        struct udp_header  *udp,  *new_udp;
+        struct uctp_header *push_uctp;
+
+        size_t move_size;
+
+        eth = pkt->handle_std->proto->eth;
+        snap = pkt->handle_std->proto->eth_snap;
+        vlan = pkt->handle_std->proto->vlan;
+        mpls = pkt->handle_std->proto->mpls;
+        ipv4 = pkt->handle_std->proto->ipv4;
+        ipv6 = pkt->handle_std->proto->ipv6;
+
+        udp = pkt->handle_std->proto->udp;
+
+        move_size = (uint8_t *)udp - (uint8_t *)eth + UDP_HEADER_LEN;
+        fprintf(stderr,"move size %u\n",move_size);
+
+        if (ofpbuf_headroom(pkt->buffer) >= UCTP_HEADER_LEN) {
+            // there is available space in headroom
+        	fprintf(stderr,"header has space\n");
+            pkt->buffer->data = (uint8_t *)(pkt->buffer->data) - UCTP_HEADER_LEN;
+            pkt->buffer->size += UCTP_HEADER_LEN;
+
+            memmove(pkt->buffer->data, eth, move_size);
+
+            new_eth = (struct eth_header *)(pkt->buffer->data);
+            new_snap = snap == NULL ? NULL
+                                   : (struct snap_header *)((uint8_t *)snap - UCTP_HEADER_LEN);
+            new_vlan = vlan == NULL ? NULL
+                                   : (struct vlan_header *)((uint8_t *)vlan - UCTP_HEADER_LEN);
+            new_mpls = mpls == NULL ? NULL
+                                   : (struct mpls_header *)((uint8_t *)mpls - UCTP_HEADER_LEN);
+            new_ipv4 = ipv4 == NULL ? NULL
+                                   : (struct ipv4_header *)((uint8_t *)ipv4 - UCTP_HEADER_LEN);
+            new_ipv6 = ipv6 == NULL ? NULL
+                                   : (struct ipv6_header *)((uint8_t *)ipv6 - UCTP_HEADER_LEN);
+            new_udp = udp == NULL ? NULL
+                                   : (struct udp_header *)((uint8_t *)udp - UCTP_HEADER_LEN);
+
+            push_uctp = (struct uctp_header *)((uint8_t *)new_eth + move_size);
+
+        } else {
+            // not enough headroom, use tailroom of the packet
+        	fprintf(stderr,"no header space\n");
+            // Note: ofpbuf_put_uninit might relocate the whole packet
+            ofpbuf_put_uninit(pkt->buffer, UCTP_HEADER_LEN);
+
+            int move_dist;
+
+            new_eth = (struct eth_header *)(pkt->buffer->data);
+            move_dist = (uint8_t *)new_eth - (uint8_t *)eth;
+            fprintf(stderr,"move count %u\n",move_dist);
+
+            new_snap = snap == NULL ? NULL
+                                   : (struct udp_header *)((uint8_t *)snap + move_dist);
+            new_vlan = vlan == NULL ? NULL
+                                   : (struct vlan_header *)((uint8_t *)vlan + move_dist);
+            new_mpls = mpls == NULL ? NULL
+                                   : (struct mpls_header *)((uint8_t *)mpls + move_dist);
+            new_ipv4 = ipv4 == NULL ? NULL
+                                   : (struct ipv4_header *)((uint8_t *)ipv4 + move_dist);
+            new_ipv6 = ipv6 == NULL ? NULL
+                                   : (struct ipv6_header *)((uint8_t *)ipv6 + move_dist);
+            new_udp = udp == NULL ? NULL
+                                   : (struct udp_header *)((uint8_t *)udp + move_dist);
+
+            push_uctp = (struct uctp_header *)((uint8_t *)new_eth + move_size);
+
+
+            // push data to create space for new vlan tag
+            memmove((uint8_t *)push_uctp + UCTP_HEADER_LEN, push_uctp,
+                    pkt->buffer->size - move_size);
+
+        }
+
+        push_uctp->uctp_flag = htonl(0x80006000);
+        push_uctp->uctp_tag = htonl(0x0000ffff);
+
+        // TODO Zoltan: This could be faster if VLAN match is updated
+        //              and proto pointers are shifted in case of realloc, ...
+        pkt->handle_std->valid = false;
+
+    } else {
+        VLOG_WARN_RL(LOG_MODULE, &rl, "Trying to execute push uctp action on packet with no udp.");
+    }
+
+}
+
+static void
+pop_uctp(struct packet *pkt, struct ofl_action_header *act UNUSED){
+	//fprintf(stderr,"enter pop_uctp\n");
+	packet_handle_std_validate(pkt->handle_std);
+	if (pkt->handle_std->proto->eth != NULL && pkt->handle_std->proto->uctp != NULL) {
+		struct eth_header *eth = pkt->handle_std->proto->eth;
+		struct vlan_header *uctp = pkt->handle_std->proto->uctp;
+		size_t move_size;
+
+		move_size = (uint8_t *)uctp - (uint8_t *)eth;
+
+		pkt->buffer->data = (uint8_t *)pkt->buffer->data + UCTP_HEADER_LEN;
+		pkt->buffer->size -= UCTP_HEADER_LEN;
+
+		memmove(pkt->buffer->data, eth, move_size);
+
+		//TODO Zoltan: revalidating might not be necessary in all cases
+		pkt->handle_std->valid = false;
+	} else {
+		VLOG_WARN_RL(LOG_MODULE, &rl, "Trying to execute POP_UCTP action on packet with no uctp.");
+	}
+
+}
+
+static void
+encap_uctp(struct packet *pkt, struct ofl_action_push *act){
+	//fprintf(stderr,"enter encap\n");
+	// TODO Zoltan: if 802.3, check if new length is still valid
+    packet_handle_std_validate(pkt->handle_std);
+    if (pkt->handle_std->proto->udp != NULL) {
+
+    	struct eth_header  *eth, *new_eth;
+    	struct ip_header   *ipv4, *new_ipv4;
+    	//struct ipv6_header *ipv6, *new_ipv6;
+        struct udp_header  *new_udp;
+        struct uctp_header *push_uctp;
+
+        size_t move_size;
+
+        eth = pkt->handle_std->proto->eth;
+        ipv4 = pkt->handle_std->proto->ipv4;
+
+        //move_size = (uint8_t *)pkt->buffer->size - (uint8_t *)pkt->handle_std->proto->ipv4
+        //		+ (uint8_t *)pkt->buffer->data;
+
+        move_size = (uint8_t *)pkt->buffer->size;
+        //uint8_t move_count = ETH_HEADER_LEN + IP_HEADER_LEN + UDP_HEADER_LEN + UCTP_HEADER_LEN
+        //		- ((uint8_t *)pkt->handle_std->proto->ipv4 - (uint8_t *)pkt->buffer->data);
+        uint8_t move_count = ETH_HEADER_LEN + IP_HEADER_LEN + UDP_HEADER_LEN + UCTP_HEADER_LEN;
+
+        if (ofpbuf_headroom(pkt->buffer) >= move_count) {
+            // there is available space in headroom, move eth backwards
+        	//fprintf(stderr,"header has space\n");
+            pkt->buffer->data = (uint8_t *)(pkt->buffer->data) - move_count;
+            pkt->buffer->size += move_count;
+
+            new_eth = (struct eth_header *)(pkt->buffer->data);
+            new_ipv4 = (struct ip_header *)(pkt->buffer->data + ETH_HEADER_LEN);
+            memcpy(new_ipv4, ipv4, IP_HEADER_LEN);
+            new_udp = (struct udp_header *)((uint8_t *)new_ipv4 + IP_HEADER_LEN);
+            push_uctp = (struct uctp_header *)((uint8_t *)new_udp + UDP_HEADER_LEN);
+
+        } else {
+            // not enough headroom, use tailroom of the packet
+        	fprintf(stderr,"no header space\n");
+            // Note: ofpbuf_put_uninit might relocate the whole packet
+        	size_t origin_size = pkt->buffer->size;
+            ofpbuf_put_uninit(pkt->buffer, move_count);
+
+            new_eth = (struct eth_header *)(pkt->buffer->data);
+            int move_dist = (uint8_t *)new_eth - (uint8_t *)eth;
+            fprintf(stderr,"move dist %d\n",move_dist);
+
+            new_ipv4 = (struct ip_header *)(pkt->buffer->data + ETH_HEADER_LEN);
+            memcpy(new_ipv4, ipv4, IP_HEADER_LEN);
+            new_udp = (struct udp_header *)(new_ipv4 + IP_HEADER_LEN);
+            push_uctp = (struct uctp_header *)((uint8_t *)new_eth + move_size);
+
+            //
+            memmove((uint8_t *)pkt->buffer->data + move_count, (uint8_t *)eth, origin_size);
+
+        }
+        //uint8_t src[6] = {0x00,0x11,0x22,0x33,0x44,0x55};
+        new_eth->eth_src[0] = 0xaa;
+        new_eth->eth_src[1] = 0xbb;
+        new_eth->eth_src[2] = 0xcc;
+        new_eth->eth_src[3] = 0xdd;
+        new_eth->eth_src[4] = 0xee;
+        new_eth->eth_src[5] = 0xff;
+        //uint8_t dst[6] = {0x55,0x44,0x33,0x22,0x11,0x00};
+        new_eth->eth_dst[0] = 0x55;
+        new_eth->eth_dst[1] = 0x44;
+        new_eth->eth_dst[2] = 0x33;
+        new_eth->eth_dst[3] = 0x22;
+        new_eth->eth_dst[4] = 0x11;
+        new_eth->eth_dst[5] = 0x00;
+        new_eth->eth_type = htons(0x800);
+
+        new_ipv4->ip_proto = 17;
+        new_ipv4->ip_tot_len += ETH_HEADER_LEN + IP_HEADER_LEN + UDP_HEADER_LEN + UCTP_HEADER_LEN;
+        new_ipv4->ip_csum = recalc_csum16(ipv4->ip_csum, (uint16_t)
+                (ipv4->ip_tot_len), (uint16_t)new_ipv4->ip_tot_len);
+
+        new_udp->udp_dst = htons(61440);
+        new_udp->udp_src = htons(0);
+        uint16_t payloadlen = (uint8_t *)pkt->buffer->size - (uint8_t *)new_udp + (uint8_t *)pkt->buffer->data;
+        new_udp->udp_len = htons(payloadlen);
+        new_udp->udp_csum = htons(0);
+
+        push_uctp->uctp_flag = htonl(0x80006000);
+        push_uctp->uctp_tag = htonl(0x0000ffff);
+
+        // TODO Zoltan: This could be faster if VLAN match is updated
+        //              and proto pointers are shifted in case of realloc, ...
+        pkt->handle_std->valid = false;
+
+
+    } else {
+        VLOG_WARN_RL(LOG_MODULE, &rl, "Trying to execute push uctp action on packet with no udp.");
+    }
+}
+
+static void
+decap_uctp(struct packet *pkt, struct ofl_action_header *act UNUSED){
+	//fprintf(stderr,"enter decap_uctp\n");
+
+	packet_handle_std_validate(pkt->handle_std);
+	if (pkt->handle_std->proto->eth != NULL && pkt->handle_std->proto->uctp != NULL) {
+		struct eth_header *eth = pkt->handle_std->proto->eth;
+		struct vlan_header *uctp = pkt->handle_std->proto->uctp;
+
+		uint8_t move_count = ETH_HEADER_LEN + IP_HEADER_LEN + UDP_HEADER_LEN + UCTP_HEADER_LEN;
+		size_t move_size;
+		move_size = pkt->buffer->size - move_count;
+
+		pkt->buffer->data = (uint8_t *)pkt->buffer->data + move_count;
+		pkt->buffer->size -= move_count;
+
+		//TODO Zoltan: revalidating might not be necessary in all cases
+		pkt->handle_std->valid = false;
+	} else {
+		VLOG_WARN_RL(LOG_MODULE, &rl, "Trying to execute POP_UCTP action on packet with no uctp.");
+	}
+
+}
 
 /*Executes set mpls ttl action.*/
 static void
@@ -871,6 +1136,23 @@ dp_execute_action(struct packet *pkt,
             pop_vlan(pkt, action);
             break;
         }
+        case (OFPAT_PUSH_UCTP): {
+            push_uctp(pkt, (struct ofl_action_push *)action);
+            break;
+        }
+        case (OFPAT_POP_UCTP): {
+            pop_uctp(pkt, action);
+            break;
+        }
+        case (OFPAT_ENCAP_UCTP): {
+            encap_uctp(pkt, (struct ofl_action_push *)action);
+            break;
+        }
+        case (OFPAT_DECAP_UCTP): {
+            decap_uctp(pkt, action);
+            break;
+        }
+
         case (OFPAT_PUSH_MPLS): {
             push_mpls(pkt, (struct ofl_action_push *)action);
             break;

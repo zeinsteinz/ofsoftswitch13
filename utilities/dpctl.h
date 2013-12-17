@@ -141,6 +141,10 @@ static struct names16 action_names[] = {
         {OFPAT_DEC_MPLS_TTL,   "mpls_dec"},
         {OFPAT_PUSH_VLAN,      "push_vlan"},
         {OFPAT_POP_VLAN,       "pop_vlan"},
+        {OFPAT_PUSH_UCTP,      "push_uctp"},
+        {OFPAT_POP_UCTP,       "pop_uctp"},
+        {OFPAT_ENCAP_UCTP,     "encap_uctp"},
+        {OFPAT_DECAP_UCTP,     "decap_uctp"},
         {OFPAT_PUSH_PBB,       "push_pbb"},
         {OFPAT_POP_PBB,        "pop_pbb"},
         {OFPAT_PUSH_MPLS,      "push_mpls"},
@@ -215,6 +219,7 @@ static struct names16 band_names[] = {
 #define MATCH_PBB_ISID       "pbb_isid"
 #define MATCH_TUNNEL_ID      "tunn_id"    
 #define MATCH_EXT_HDR        "ext_hdr"
+#define MATCH_USER_TAG       "user_tag"
 
 #define GROUP_MOD_COMMAND "cmd"
 #define GROUP_MOD_TYPE    "type"

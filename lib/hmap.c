@@ -35,6 +35,7 @@
 #include "hmap.h"
 #include <assert.h>
 #include <stdint.h>
+#include <stdio.h>
 #include "util.h"
 
 /* Initializes 'hmap' as an empty hash table. */

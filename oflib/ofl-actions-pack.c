@@ -60,10 +60,14 @@ ofl_actions_ofp_len(struct ofl_action_header *action, struct ofl_exp *exp) {
         case OFPAT_DEC_MPLS_TTL:
             return sizeof(struct ofp_action_header);
         case OFPAT_PUSH_VLAN:
+        case OFPAT_PUSH_UCTP:
+        case OFPAT_ENCAP_UCTP:
         case OFPAT_PUSH_PBB:
         case OFPAT_PUSH_MPLS:  
             return sizeof(struct ofp_action_push);
         case OFPAT_POP_VLAN:
+        case OFPAT_POP_UCTP:
+        case OFPAT_DECAP_UCTP:
         case OFPAT_POP_PBB:
             return sizeof(struct ofp_action_header);
         case OFPAT_POP_MPLS:
@@ -139,6 +143,8 @@ ofl_actions_pack(struct ofl_action_header *src, struct ofp_action_header *dst, u
             return sizeof(struct ofp_action_header);
         }
         case OFPAT_PUSH_VLAN:
+        case OFPAT_PUSH_UCTP:
+        case OFPAT_ENCAP_UCTP:
         case OFPAT_PUSH_MPLS: 
         case OFPAT_PUSH_PBB:{
             struct ofl_action_push *sa = (struct ofl_action_push *)src;
@@ -149,7 +155,9 @@ ofl_actions_pack(struct ofl_action_header *src, struct ofp_action_header *dst, u
             memset(da->pad, 0x00, 2);
             return sizeof(struct ofp_action_push);
         }
-        case OFPAT_POP_VLAN: 
+        case OFPAT_POP_VLAN:
+        case OFPAT_POP_UCTP:
+        case OFPAT_DECAP_UCTP:
         case OFPAT_POP_PBB: {
             struct ofp_action_header *da = (struct ofp_action_header *)dst;
 
@@ -222,7 +230,9 @@ ofl_actions_pack(struct ofl_action_header *src, struct ofp_action_header *dst, u
 					if( field != 11 && field != 12 && field != 22 && field != 23) 
 						value = htonl(*((uint32_t*) sa->field->value));
 					else  
-						value = *((uint32_t*) sa->field->value);                   
+						value = *((uint32_t*) sa->field->value);
+					fprintf(stderr,"enter set pack\n");
+					fprintf(stderr,"%u\n",value);
 					memcpy(data + (sizeof(struct ofp_action_set_field)), &value, OXM_LENGTH(sa->field->header));
                     break;
                 }

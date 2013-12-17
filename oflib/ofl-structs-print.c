@@ -423,6 +423,12 @@ ofl_structs_oxm_tlv_print(FILE *stream, struct ofl_match_tlv *f)
 				fprintf(stream, ", ext_hdr_mask=\"0x%x\"", *((uint16_t*)(f->value+4)));
 			}
 			break;
+		case OFPXMT_OFB_USER_TAG:
+			fprintf(stream, "user_tag=\"%u\"", *((uint32_t*) f->value));
+			if (OXM_HASMASK(f->header)) {
+				fprintf(stream, ", user_tag_mask=\"%u\"", *((uint32_t*)(f->value+4)));
+			}
+			break;
 		default:
 			fprintf(stream, "unknown type %d", field);
 	}

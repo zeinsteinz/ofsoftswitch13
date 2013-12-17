@@ -102,6 +102,8 @@ ofl_action_print(FILE *stream, struct ofl_action_header *act, struct ofl_exp *ex
             break;
         }
         case OFPAT_PUSH_VLAN:
+        case OFPAT_PUSH_UCTP:
+        case OFPAT_ENCAP_UCTP:
         case OFPAT_PUSH_MPLS:
         case OFPAT_PUSH_PBB:{
             struct ofl_action_push *a = (struct ofl_action_push *)act;
@@ -109,7 +111,9 @@ ofl_action_print(FILE *stream, struct ofl_action_header *act, struct ofl_exp *ex
             fprintf(stream, "{eth=\"0x%04"PRIx16"\"}", a->ethertype);
             break;
         }
-        case OFPAT_POP_VLAN: 
+        case OFPAT_POP_VLAN:
+        case OFPAT_POP_UCTP:
+        case OFPAT_DECAP_UCTP:
         case OFPAT_POP_PBB: {
             break;
         }

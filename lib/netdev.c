@@ -280,7 +280,8 @@ netdev_setup_class(const struct netdev *netdev, uint16_t class_id,
     int actual_rate;
 
     /* we need to translate from .1% to kbps */
-    actual_rate = rate*netdev->speed;
+    //actual_rate = rate*netdev->speed;
+    actual_rate = rate * 1000;
 
     snprintf(command, sizeof(command), COMMAND_ADD_CLASS, netdev->name,
              TC_QDISC, TC_ROOT_CLASS, TC_QDISC, class_id, actual_rate,
@@ -646,7 +647,6 @@ do_ethtool(struct netdev *netdev)
         }
 
         netdev->speed = ecmd.speed;
-
     } else {
         VLOG_DBG(LOG_MODULE, "ioctl(SIOCETHTOOL) failed: %s", strerror(errno));
     }
