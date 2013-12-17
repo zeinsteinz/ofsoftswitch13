@@ -235,9 +235,9 @@ get_ipv6_address(const char *name, struct in6_addr *in6)
                               "root handle %x: htb default %x"
 #define COMMAND_DEL_DEV_QDISC "/sbin/tc qdisc del dev %s root"
 #define COMMAND_ADD_CLASS "/sbin/tc class add dev %s parent %x:%x " \
-                          "classid %x:%x htb rate %dkbit ceil %dkbit"
+                          "classid %x:%x htb rate %dkbit ceil %dkbit prio %d"
 #define COMMAND_CHANGE_CLASS "/sbin/tc class change dev %s parent %x:%x " \
-                             "classid %x:%x htb rate %dkbit ceil %dkbit"
+                             "classid %x:%x htb rate %dkbit ceil %dkbit prio %d"
 #define COMMAND_DEL_CLASS "/sbin/tc class del dev %s parent %x:%x classid %x:%x"
 
 static int
@@ -251,7 +251,7 @@ netdev_setup_root_class(const struct netdev *netdev, uint16_t class_id,
     actual_rate = rate*netdev->speed;
 
     snprintf(command, sizeof(command), COMMAND_ADD_CLASS, netdev->name,
-             TC_QDISC,0,TC_QDISC, class_id, actual_rate, netdev->speed*1000);
+             TC_QDISC,0,TC_QDISC, class_id, actual_rate, netdev->speed*1000, 0);
     if (system(command) != 0) {
         VLOG_ERR(LOG_MODULE, "Problem configuring root class %d for device %s",
                  class_id, netdev->name);
@@ -274,18 +274,21 @@ netdev_setup_root_class(const struct netdev *netdev, uint16_t class_id,
  */
 int
 netdev_setup_class(const struct netdev *netdev, uint16_t class_id,
-                   uint16_t rate)
+                   uint16_t min_rate, uint16_t max_rate, uint16_t prio)
 {
     char command[1024];
-    int actual_rate;
-
+    int minrate, maxrate;
     /* we need to translate from .1% to kbps */
     //actual_rate = rate*netdev->speed;
-    actual_rate = rate * 1000;
+    minrate = min_rate * 1000;
+
+    if(max_rate == 0)
+    	maxrate = netdev->speed*1000;
+    else maxrate = max_rate * 1000;
 
     snprintf(command, sizeof(command), COMMAND_ADD_CLASS, netdev->name,
-             TC_QDISC, TC_ROOT_CLASS, TC_QDISC, class_id, actual_rate,
-             netdev->speed*1000);
+             TC_QDISC, TC_ROOT_CLASS, TC_QDISC, class_id, minrate,
+             maxrate, prio);
     if (system(command) != 0) {
         VLOG_ERR(LOG_MODULE, "Problem configuring class %d for device %s",class_id,
                  netdev->name);
@@ -306,17 +309,20 @@ netdev_setup_class(const struct netdev *netdev, uint16_t class_id,
  * successful.
  */
 int
-netdev_change_class(const struct netdev *netdev, uint16_t class_id, uint16_t rate)
+netdev_change_class(const struct netdev *netdev, uint16_t class_id,
+					uint16_t min_rate, uint16_t max_rate, uint16_t prio)
 {
     char command[1024];
-    int actual_rate;
+    int minrate, maxrate;
 
-    /* we need to translate from .1% to kbps */
-    actual_rate = rate*netdev->speed;
+    minrate = min_rate * 1000;
+
+    if(maxrate == 0)
+        maxrate = netdev->speed*1000;
+    else maxrate = max_rate * 1000;
 
     snprintf(command, sizeof(command), COMMAND_CHANGE_CLASS, netdev->name,
-             TC_QDISC, TC_ROOT_CLASS, TC_QDISC, class_id, actual_rate,
-             netdev->speed*1000 );
+             TC_QDISC, TC_ROOT_CLASS, TC_QDISC, class_id, minrate, maxrate, prio);
     if (system(command) != 0) {
         VLOG_ERR(LOG_MODULE, "Problem configuring class %d for device %s",
                  class_id, netdev->name);
@@ -496,7 +502,7 @@ netdev_setup_slicing(struct netdev *netdev, uint16_t num_queues)
     /* we configure a default class. This would be the best-effort, getting
      * everything that remains from the other queues.tc requires a min-rate
      * to configure a class, we put a min_rate here */
-    error = netdev_setup_class(netdev,TC_DEFAULT_CLASS,1);
+    error = netdev_setup_class(netdev,TC_DEFAULT_CLASS,1,0,0);
     if (error) {
         return error;
     }

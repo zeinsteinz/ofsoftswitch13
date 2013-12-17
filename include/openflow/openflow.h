@@ -218,13 +218,14 @@ OFP_ASSERT(sizeof(struct ofp_packet_queue) == 16);
 enum ofp_queue_properties {
     OFPQT_MIN_RATE = 1,         /* Minimum datarate guaranteed. */
     OFPQT_MAX_RATE = 2,         /* Maximum datarate. */
+    OFPQT_PRIORITY = 3,
     OFPQT_EXPERIMENTER = 0xffff /* Experimenter defined property. */
 };
 
 /* Min-Rate queue property description. */
 struct ofp_queue_prop_min_rate {
 	struct ofp_queue_prop_header prop_header; /* prop: OFPQT_MIN, len: 16. */
-	uint16_t rate;                            /* In 1/10 of a percent; >1000 -> disabled. */
+	uint16_t rate;                            /* In mbits. */
 	uint8_t pad[6];                           /* 64-bit alignment */
 };
 OFP_ASSERT(sizeof(struct ofp_queue_prop_min_rate) == 16);
@@ -232,7 +233,15 @@ OFP_ASSERT(sizeof(struct ofp_queue_prop_min_rate) == 16);
 /* Max-Rate queue property description. */
 struct ofp_queue_prop_max_rate {
 	struct ofp_queue_prop_header prop_header; /* prop: OFPQT_MAX, len: 16. */
-	uint16_t rate;                            /* In 1/10 of a percent; >1000 -> disabled. */
+	uint16_t rate;                            /* In mbits. */
+	uint8_t pad[6];                           /* 64-bit alignment */
+};
+OFP_ASSERT(sizeof(struct ofp_queue_prop_max_rate) == 16);
+
+/* Priority queue property description. */
+struct ofp_queue_prop_priority {
+	struct ofp_queue_prop_header prop_header; /* prop: OFPQT_PRIORITY, len: 16. */
+	uint16_t priority;                        /*  */
 	uint8_t pad[6];                           /* 64-bit alignment */
 };
 OFP_ASSERT(sizeof(struct ofp_queue_prop_max_rate) == 16);

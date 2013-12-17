@@ -742,6 +742,9 @@ ofl_structs_queue_prop_ofp_len(struct ofl_queue_prop_header *prop) {
         case OFPQT_MAX_RATE:{
            return sizeof(struct ofp_queue_prop_max_rate);
         }
+        case OFPQT_PRIORITY:{
+           return sizeof(struct ofp_queue_prop_priority);
+        }
         case OFPQT_EXPERIMENTER:{
            return sizeof(struct ofp_queue_prop_experimenter);
         }
@@ -772,6 +775,15 @@ ofl_structs_queue_prop_pack(struct ofl_queue_prop_header *src,
             struct ofp_queue_prop_max_rate *dp = (struct ofp_queue_prop_max_rate *)dst;
             dp->prop_header.len = htons(sizeof(struct ofp_queue_prop_max_rate));
             dp->rate            = htons(sp->rate);
+            memset(dp->pad, 0x00, 6);
+
+            return sizeof(struct ofp_queue_prop_max_rate);
+        }
+        case OFPQT_PRIORITY:{
+            struct ofl_queue_prop_priority *sp = (struct ofl_queue_prop_priority *)src;
+            struct ofp_queue_prop_priority *dp = (struct ofp_queue_prop_priority *)dst;
+            dp->prop_header.len = htons(sizeof(struct ofp_queue_prop_priority));
+            dp->priority        = htons(sp->priority);
             memset(dp->pad, 0x00, 6);
 
             return sizeof(struct ofp_queue_prop_max_rate);

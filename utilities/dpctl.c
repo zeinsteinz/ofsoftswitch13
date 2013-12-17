@@ -821,7 +821,9 @@ set_desc(struct vconn *vconn, int argc UNUSED, char *argv[]) {
 static void
 queue_mod(struct vconn *vconn, int argc UNUSED, char *argv[]) {
     struct ofl_packet_queue *pq;
-    struct ofl_queue_prop_min_rate *p;
+    struct ofl_queue_prop_min_rate *pmin;
+    struct ofl_queue_prop_max_rate *pmax;
+    struct ofl_queue_prop_priority *pp;
 
     struct ofl_exp_openflow_msg_queue msg =
             {{{{.type = OFPT_EXPERIMENTER},
@@ -840,15 +842,31 @@ queue_mod(struct vconn *vconn, int argc UNUSED, char *argv[]) {
         ofp_fatal(0, "Error parsing queue_mod queue: %s.", argv[1]);
     }
 
-    pq->properties_num = 1;
+    pq->properties_num = 3;
     pq->properties = xmalloc(sizeof(struct ofl_queue_prop_header *));
 
-    p = xmalloc(sizeof(struct ofl_queue_prop_min_rate));
-    pq->properties[0] = (struct ofl_queue_prop_header *)p;
-    p->header.type = OFPQT_MIN_RATE;
+    pmin = xmalloc(sizeof(struct ofl_queue_prop_min_rate));
+    pq->properties[0] = (struct ofl_queue_prop_header *)pmin;
+    pmin->header.type = OFPQT_MIN_RATE;
 
-    if (parse16(argv[2], NULL,0, UINT16_MAX, &p->rate)) {
-        ofp_fatal(0, "Error parsing queue_mod bw: %s.", argv[2]);
+    if (parse16(argv[2], NULL,0, UINT16_MAX, &pmin->rate)) {
+        ofp_fatal(0, "Error parsing queue_mod min-rate: %s.", argv[2]);
+    }
+
+    pmax = xmalloc(sizeof(struct ofl_queue_prop_max_rate));
+    pq->properties[1] = (struct ofl_queue_prop_header *)pmax;
+    pmax->header.type = OFPQT_MAX_RATE;
+
+    if (parse16(argv[3], NULL,0, UINT16_MAX, &pmax->rate)) {
+        ofp_fatal(0, "Error parsing queue_mod max-rate: %s.", argv[3]);
+    }
+
+    pp = xmalloc(sizeof(struct ofl_queue_prop_priority));
+    pq->properties[2] = (struct ofl_queue_prop_header *)pp;
+    pp->header.type = OFPQT_PRIORITY;
+
+    if (parse16(argv[4], NULL,0, UINT16_MAX, &pp->priority)) {
+        ofp_fatal(0, "Error parsing queue_mod priority: %s.", argv[4]);
     }
 
 
@@ -924,7 +942,7 @@ static struct command all_commands[] = {
     {"queue-get-config", 1, 1, queue_get_config},
     {"set-desc", 1, 1, set_desc},
 
-    {"queue-mod", 3, 3, queue_mod},
+    {"queue-mod", 5, 5, queue_mod},
     {"queue-del", 2, 2, queue_del}
 };
 
@@ -1053,35 +1071,35 @@ usage(void)
 {
     printf("%s: OpenFlow switch management utility\n"
            "usage: %s [OPTIONS] SWITCH COMMAND [ARG...]\n"
-            "  SWITCH ping [N] [B]                    latency of B-byte echos N times\n"
-            "  SWITCH monitor                         monitors packets from the switch\n"
+            "  SWITCH ping [N] [B]                     latency of B-byte echos N times\n"
+            "  SWITCH monitor                          monitors packets from the switch\n"
             "\n"
-            "  SWITCH features                        show basic information\n"
-            "  SWITCH get-config                      get switch configuration\n"
-            "  SWITCH port-desc                       print port description and status\n"
-            "  SWITCH meter-config [METER]            get meter configuration\n"
-            "  SWITCH stats-desc                      print switch description\n"
-            "  SWITCH stats-flow [ARG [MATCH]]        print flow stats\n"
-            "  SWITCH stats-aggr [ARG [MATCH]]        print flow aggregate stats\n"
-            "  SWITCH stats-table                     print table stats\n"
-            "  SWITCH stats-port [PORT]               print port statistics\n"
-            "  SWITCH stats-queue [PORT [QUEUE]]      print queue statistics\n"
-            "  SWITCH stats-group [GROUP]             print group statistics\n"
-            "  SWITCH stats-meter [METER]             print meter statistics\n"
-            "  SWITCH stats-group-desc [GROUP]        print group desc statistics\n"
+            "  SWITCH features                         show basic information\n"
+            "  SWITCH get-config                       get switch configuration\n"
+            "  SWITCH port-desc                        print port description and status\n"
+            "  SWITCH meter-config [METER]             get meter configuration\n"
+            "  SWITCH stats-desc                       print switch description\n"
+            "  SWITCH stats-flow [ARG [MATCH]]         print flow stats\n"
+            "  SWITCH stats-aggr [ARG [MATCH]]         print flow aggregate stats\n"
+            "  SWITCH stats-table                      print table stats\n"
+            "  SWITCH stats-port [PORT]                print port statistics\n"
+            "  SWITCH stats-queue [PORT [QUEUE]]       print queue statistics\n"
+            "  SWITCH stats-group [GROUP]              print group statistics\n"
+            "  SWITCH stats-meter [METER]              print meter statistics\n"
+            "  SWITCH stats-group-desc [GROUP]         print group desc statistics\n"
             "\n"
-            "  SWITCH set-config ARG                  set switch configuration\n"
-            "  SWITCH flow-mod ARG [MATCH [INST...]]  send flow_mod message\n"
-            "  SWITCH group-mod ARG [BUCARG ACT...]   send group_mod message\n"
-            "  SWITCH meter-mod ARG [BANDARG ...]     send meter_mod message\n"
-            "  SWITCH port-mod ARG                    send port_mod message\n"
-            "  SWITCH table-mod ARG                   send table_mod message\n"
-            "  SWITCH queue-get-config PORT           send queue_get_config message\n"
+            "  SWITCH set-config ARG                   set switch configuration\n"
+            "  SWITCH flow-mod ARG [MATCH [INST...]]   send flow_mod message\n"
+            "  SWITCH group-mod ARG [BUCARG ACT...]    send group_mod message\n"
+            "  SWITCH meter-mod ARG [BANDARG ...]      send meter_mod message\n"
+            "  SWITCH port-mod ARG                     send port_mod message\n"
+            "  SWITCH table-mod ARG                    send table_mod message\n"
+            "  SWITCH queue-get-config PORT            send queue_get_config message\n"
             "\n"
             "OpenFlow extensions\n"
-            "  SWITCH set-desc DESC                   sets the DP description\n"
-            "  SWITCH queue-mod PORT QUEUE BW         adds/modifies queue\n"
-            "  SWITCH queue-del PORT QUEUE            deletes queue\n"
+            "  SWITCH set-desc DESC                    sets the DP description\n"
+            "  SWITCH queue-mod PORT QUEUE MIN MAX P   adds/modifies queue\n"
+            "  SWITCH queue-del PORT QUEUE             deletes queue\n"
             "\n",
             program_name, program_name);
      vconn_usage(true, false, false);

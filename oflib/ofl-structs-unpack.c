@@ -806,6 +806,21 @@ ofl_structs_queue_prop_unpack(struct ofp_queue_prop_header *src, size_t *len, st
             break;    
         
         }
+        case OFPQT_PRIORITY:{
+            struct ofp_queue_prop_priority *sp = (struct ofp_queue_prop_priority *)src;
+            struct ofl_queue_prop_priority *dp = (struct ofl_queue_prop_priority *)malloc(sizeof(struct ofl_queue_prop_priority));
+
+            if (*len < sizeof(struct ofp_queue_prop_priority)) {
+                OFL_LOG_WARN(LOG_MODULE, "Received PRIORITY queue property has invalid length (%zu).", *len);
+                return ofl_error(OFPET_BAD_ACTION, OFPBRC_BAD_LEN);
+            }
+            *len -= sizeof(struct ofp_queue_prop_priority);
+            dp->priority = ntohs(sp->priority);
+
+            *dst = (struct ofl_queue_prop_header *)dp;
+            break;
+
+        }
         case OFPQT_EXPERIMENTER:{
             struct ofp_queue_prop_experimenter *sp = (struct ofp_queue_prop_experimenter *)src;
             struct ofl_queue_prop_experimenter *dp = (struct ofl_queue_prop_experimenter *)malloc(sizeof(struct ofl_queue_prop_experimenter));

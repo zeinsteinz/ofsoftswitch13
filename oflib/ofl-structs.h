@@ -63,13 +63,19 @@ struct ofl_queue_prop_header {
 struct ofl_queue_prop_min_rate {
     struct ofl_queue_prop_header   header; /* OFPQT_MIN_RATE */
 
-    uint16_t   rate; /* In 1/10 of a percent; >1000 -> disabled. */
+    uint16_t   rate; /* In mbits. */
 };
 
 struct ofl_queue_prop_max_rate {
     struct ofl_queue_prop_header   header; /* OFPQT_MAX_RATE */
 
-    uint16_t   rate; /* In 1/10 of a percent; >1000 -> disabled. */
+    uint16_t   rate; /* In mbits. */
+};
+
+struct ofl_queue_prop_priority {
+    struct ofl_queue_prop_header   header; /* OFPQT_MAX_RATE */
+
+    uint16_t   priority; /*  */
 };
 
 struct ofl_queue_prop_experimenter {

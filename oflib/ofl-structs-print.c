@@ -526,6 +526,18 @@ ofl_structs_queue_prop_print(FILE *stream, struct ofl_queue_prop_header *p) {
             fprintf(stream, "{rate=\"%u\"}", pm->rate);
             break;
         }
+        case (OFPQT_MAX_RATE): {
+            struct ofl_queue_prop_max_rate *pm = (struct ofl_queue_prop_max_rate *)p;
+
+            fprintf(stream, "{rate=\"%u\"}", pm->rate);
+            break;
+        }
+        case (OFPQT_PRIORITY): {
+            struct ofl_queue_prop_priority *pm = (struct ofl_queue_prop_priority *)p;
+
+            fprintf(stream, "{prio=\"%u\"}", pm->priority);
+            break;
+        }
         
     }
 
