@@ -200,6 +200,7 @@ flow_table_flow_mod(struct flow_table *table, struct ofl_msg_flow_mod *mod, bool
 
 struct flow_entry *
 flow_table_lookup(struct flow_table *table, struct packet *pkt) {
+	//fprintf(stderr,"enter lookup\n");
     struct flow_entry *entry;
 
     table->stats->lookup_count++;

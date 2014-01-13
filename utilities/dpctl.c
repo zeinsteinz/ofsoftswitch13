@@ -184,7 +184,7 @@ static int
 parse32(char *str, struct names32 *names, size_t names_num, uint32_t max, uint32_t *val);
 
 static int
-parse32m(char *str, struct names32 *names, size_t names_num, uint32_t max, uint32_t *val, uint32_t **mask);
+parse32m(char *str, struct names32 *names, size_t names_num, uint32_t max, uint32_t *val, uint32_t *mask);
 
 static struct ofl_exp_msg dpctl_exp_msg =
         {.pack      = ofl_exp_msg_pack,
@@ -1457,7 +1457,7 @@ parse_match(char *str, struct ofl_match_header **match) {
          if (strncmp(token, MATCH_IPV6_FLABEL KEY_VAL, strlen(MATCH_IPV6_FLABEL KEY_VAL)) == 0) {
             uint32_t ipv6_label;
             uint32_t *mask;
-            if (parse32m(token + strlen(MATCH_IPV6_FLABEL KEY_VAL), NULL, 0, 0xfffff, &ipv6_label, &mask)) {
+            if (parse32m(token + strlen(MATCH_IPV6_FLABEL KEY_VAL), NULL, 0, 0xfffff, &ipv6_label, mask)) {
                 ofp_fatal(0, "Error parsing ipv6_label: %s.", token);
             }
             else
@@ -1561,15 +1561,25 @@ parse_match(char *str, struct ofl_match_header **match) {
         /* User Tag */
         if (strncmp(token, MATCH_USER_TAG KEY_VAL, strlen(MATCH_USER_TAG KEY_VAL)) == 0) {
         	uint32_t user_tag;
-        	//uint32_t mask;
-			//if (parse32(token + strlen(MATCH_USER_TAG KEY_VAL), NULL, 0, 0xffffffff, &user_tag)) {
-			//	ofp_fatal(0, "Error parsing user_tag: %s.", token);
-			//}
-			//else ofl_structs_match_put32(m,OXM_OF_USER_TAG,user_tag);
-        	if (sscanf(token, MATCH_USER_TAG KEY_VAL "0x%"SCNx32"", (&user_tag)) != 1) {
-                ofp_fatal(0, "Error parsing %s: %s.", MATCH_USER_TAG, token);
-            }
-   	        else ofl_structs_match_put32(m, OXM_OF_USER_TAG, user_tag);
+        	uint32_t mask;
+
+			if (parse32m(token + strlen(MATCH_USER_TAG KEY_VAL), NULL, 0, 0xffffffff, &user_tag, &mask)) {
+				ofp_fatal(0, "Error parsing user_tag: %s.", token);
+			}
+			else
+			{
+				if(mask == NULL)
+				{
+					ofl_structs_match_put32(m,OXM_OF_USER_TAG,user_tag);
+				}
+				else
+					ofl_structs_match_put32m(m,OXM_OF_USER_TAG_W,user_tag,mask);
+			}
+
+        	//if (sscanf(token, MATCH_USER_TAG KEY_VAL "0x%"SCNx32"", (&user_tag)) != 1) {
+            //    ofp_fatal(0, "Error parsing %s: %s.", MATCH_USER_TAG, token);
+            //}
+   	        //else ofl_structs_match_put32(m, OXM_OF_USER_TAG, user_tag);
 			continue;
         }
 
@@ -2731,17 +2741,25 @@ parse32(char *str, struct names32 *names, size_t names_num, uint32_t max, uint32
         }
     }
 
-    if ((max > 0) && (sscanf(str, "%"SCNu32"", val)) == 1 && ((*val) <= max)) {
-        return 0;
+    /* Checks if the passed value is hexadecimal. */
+    if( str[1] == 'x'){
+        if ((max > 0) && (sscanf(str, "%"SCNx32"", val))  == 1 && (*val <= max)) {
+            return 0;
+        }
     }
+    else {
+         if ((max > 0) && (sscanf(str, "%"SCNu32"", val))  == 1 && (*val <= max)) {
+            return 0;
+         }
+    }
+
     return -1;
 }
 
 static int
-parse32m(char *str, struct names32 *names, size_t names_num, uint32_t max, uint32_t *val, uint32_t **mask){
-
+parse32m(char *str, struct names32 *names, size_t names_num, uint32_t max, uint32_t *val, uint32_t *mask){
     size_t i;
-    char *saveptr = NULL;
+    char *token, *saveptr = NULL;
 
     for (i=0; i<names_num; i++) {
         if (strcmp(str, names[i].name) == 0) {
@@ -2750,17 +2768,29 @@ parse32m(char *str, struct names32 *names, size_t names_num, uint32_t max, uint3
     }
 
     if ((max > 0) && (*val <= max)) {
-        if (!sscanf(str, "%"SCNu32"", val))
-            return -1;
+    	if( str[1] == 'x'){
+    		if (!sscanf(str, "%"SCNx32"", val))
+    			return -1;
+    	}
+    	else{
+    		if (!sscanf(str, "%"SCNu32"", val))
+    		    return -1;
+    	}
     }
 
-    strtok_r(str, MASK_SEP, &saveptr);
+    token = strtok_r(str, MASK_SEP, &saveptr);
 
-    if(saveptr == NULL)
-        *mask = NULL;
-    else {
-        *mask = (uint32_t*) malloc(sizeof(uint32_t));
-        sscanf(saveptr, "%"SCNu32"", *mask);
+    if(strcmp(saveptr,"") == 0)
+    {
+        mask = NULL;
+    }
+    else
+    {
+        if(saveptr[1]=='x')
+        {
+        	sscanf(saveptr, "%"SCNx32"", mask);
+        }
+        else sscanf(saveptr, "%"SCNu32"", mask);
     }
     return 0;
 }

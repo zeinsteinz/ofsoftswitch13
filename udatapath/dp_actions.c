@@ -629,7 +629,7 @@ push_uctp(struct packet *pkt, struct ofl_action_push *act){
 
         }
 
-        push_uctp->uctp_flag = htonl(0x80006000);
+        push_uctp->uctp_flag = htonl(0x80000000);
         push_uctp->uctp_tag = htonl(0x0000ffff);
 
         // TODO Zoltan: This could be faster if VLAN match is updated
@@ -671,8 +671,8 @@ encap_uctp(struct packet *pkt, struct ofl_action_push *act){
 	//fprintf(stderr,"enter encap\n");
 	// TODO Zoltan: if 802.3, check if new length is still valid
     packet_handle_std_validate(pkt->handle_std);
-    if (pkt->handle_std->proto->udp != NULL) {
-
+    if (pkt->handle_std->proto->ipv4 != NULL) {
+    	fprintf(stderr,"process encap\n");
     	struct eth_header  *eth, *new_eth;
     	struct ip_header   *ipv4, *new_ipv4;
     	//struct ipv6_header *ipv6, *new_ipv6;
@@ -732,11 +732,11 @@ encap_uctp(struct packet *pkt, struct ofl_action_push *act){
         new_eth->eth_src[4] = 0xee;
         new_eth->eth_src[5] = 0xff;
         //uint8_t dst[6] = {0x55,0x44,0x33,0x22,0x11,0x00};
-        new_eth->eth_dst[0] = 0x55;
-        new_eth->eth_dst[1] = 0x44;
-        new_eth->eth_dst[2] = 0x33;
-        new_eth->eth_dst[3] = 0x22;
-        new_eth->eth_dst[4] = 0x11;
+        new_eth->eth_dst[0] = 0x00;
+        new_eth->eth_dst[1] = 0x00;
+        new_eth->eth_dst[2] = 0x00;
+        new_eth->eth_dst[3] = 0x00;
+        new_eth->eth_dst[4] = 0x00;
         new_eth->eth_dst[5] = 0x00;
         new_eth->eth_type = htons(0x800);
 
@@ -751,7 +751,7 @@ encap_uctp(struct packet *pkt, struct ofl_action_push *act){
         new_udp->udp_len = htons(payloadlen);
         new_udp->udp_csum = htons(0);
 
-        push_uctp->uctp_flag = htonl(0x80006000);
+        push_uctp->uctp_flag = htonl(0x80008000);
         push_uctp->uctp_tag = htonl(0x0000ffff);
 
         // TODO Zoltan: This could be faster if VLAN match is updated
@@ -760,13 +760,13 @@ encap_uctp(struct packet *pkt, struct ofl_action_push *act){
 
 
     } else {
-        VLOG_WARN_RL(LOG_MODULE, &rl, "Trying to execute push uctp action on packet with no udp.");
+        VLOG_WARN_RL(LOG_MODULE, &rl, "Trying to execute encap uctp action on packet with no ip.");
     }
 }
 
 static void
 decap_uctp(struct packet *pkt, struct ofl_action_header *act UNUSED){
-	//fprintf(stderr,"enter decap_uctp\n");
+	//fprintf(stderr,"process decap\n");
 
 	packet_handle_std_validate(pkt->handle_std);
 	if (pkt->handle_std->proto->eth != NULL && pkt->handle_std->proto->uctp != NULL) {
@@ -783,7 +783,7 @@ decap_uctp(struct packet *pkt, struct ofl_action_header *act UNUSED){
 		//TODO Zoltan: revalidating might not be necessary in all cases
 		pkt->handle_std->valid = false;
 	} else {
-		VLOG_WARN_RL(LOG_MODULE, &rl, "Trying to execute POP_UCTP action on packet with no uctp.");
+		VLOG_WARN_RL(LOG_MODULE, &rl, "Trying to execute DECAP_UCTP action on packet with no uctp.");
 	}
 
 }

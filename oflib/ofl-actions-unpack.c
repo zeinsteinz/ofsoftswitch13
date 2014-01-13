@@ -310,8 +310,6 @@ ofl_actions_unpack(struct ofp_action_header *src, size_t *len, struct ofl_action
 					if( field != 11 && field != 12 && field != 22 && field != 23)
 						v = htonl(*((uint32_t*) value));
 					else v = *((uint32_t*) value);
-					fprintf(stderr,"enter unpack action\n");
-					fprintf(stderr,"%u\n",v);
                     memcpy(da->field->value , &v, OXM_LENGTH(da->field->header));
                     break;
                 }

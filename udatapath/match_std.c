@@ -162,8 +162,8 @@ packet_match(struct ofl_match *flow_match, struct ofl_match *packet){
             flow_mask = f->value + field_len;
         }
 
-        char *f_str = ofl_structs_oxm_tlv_to_string(f);
-        free(f_str);
+        //char *f_str = ofl_structs_oxm_tlv_to_string(f);
+        //free(f_str);
 
         /* Lookup the packet header */
         packet_f = oxm_match_lookup(packet_header, packet);
@@ -245,7 +245,6 @@ packet_match(struct ofl_match *flow_match, struct ofl_match *packet){
                         return false;
                 }
                 else {
-                	//fprintf(stderr,"no mask\n");
                     if (!match_48(flow_val, packet_val))
                         return false;
                 }
