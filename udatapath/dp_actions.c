@@ -675,7 +675,6 @@ encap_uctp(struct packet *pkt, struct ofl_action_push *act){
     	fprintf(stderr,"process encap\n");
     	struct eth_header  *eth, *new_eth;
     	struct ip_header   *ipv4, *new_ipv4;
-    	//struct ipv6_header *ipv6, *new_ipv6;
         struct udp_header  *new_udp;
         struct uctp_header *push_uctp;
 
@@ -684,19 +683,16 @@ encap_uctp(struct packet *pkt, struct ofl_action_push *act){
         eth = pkt->handle_std->proto->eth;
         ipv4 = pkt->handle_std->proto->ipv4;
 
-        //move_size = (uint8_t *)pkt->buffer->size - (uint8_t *)pkt->handle_std->proto->ipv4
-        //		+ (uint8_t *)pkt->buffer->data;
-
         move_size = (uint8_t *)pkt->buffer->size;
-        //uint8_t move_count = ETH_HEADER_LEN + IP_HEADER_LEN + UDP_HEADER_LEN + UCTP_HEADER_LEN
-        //		- ((uint8_t *)pkt->handle_std->proto->ipv4 - (uint8_t *)pkt->buffer->data);
         uint8_t move_count = ETH_HEADER_LEN + IP_HEADER_LEN + UDP_HEADER_LEN + UCTP_HEADER_LEN;
 
         if (ofpbuf_headroom(pkt->buffer) >= move_count) {
             // there is available space in headroom, move eth backwards
-        	//fprintf(stderr,"header has space\n");
             pkt->buffer->data = (uint8_t *)(pkt->buffer->data) - move_count;
             pkt->buffer->size += move_count;
+
+            //fprintf(stderr,"data %d\n",(uint8_t *)(pkt->buffer->data));
+            //fprintf(stderr,"eth %d\n",(uint8_t *)eth);
 
             new_eth = (struct eth_header *)(pkt->buffer->data);
             new_ipv4 = (struct ip_header *)(pkt->buffer->data + ETH_HEADER_LEN);
@@ -713,6 +709,7 @@ encap_uctp(struct packet *pkt, struct ofl_action_push *act){
 
             new_eth = (struct eth_header *)(pkt->buffer->data);
             int move_dist = (uint8_t *)new_eth - (uint8_t *)eth;
+            //int move_dist = (uint8_t *)new_eth - (uint8_t *)(pkt->buffer->data) - 50;
             fprintf(stderr,"move dist %d\n",move_dist);
 
             new_ipv4 = (struct ip_header *)(pkt->buffer->data + ETH_HEADER_LEN);
@@ -756,8 +753,12 @@ encap_uctp(struct packet *pkt, struct ofl_action_push *act){
 
         // TODO Zoltan: This could be faster if VLAN match is updated
         //              and proto pointers are shifted in case of realloc, ...
-        pkt->handle_std->valid = false;
-
+        //pkt->handle_std->valid = false;
+        pkt->handle_std->proto->eth = new_eth;
+        pkt->handle_std->proto->ipv4 = new_ipv4;
+        pkt->handle_std->proto->udp = new_udp;
+        pkt->handle_std->proto->uctp = push_uctp;
+        pkt->handle_std->valid = true;
 
     } else {
         VLOG_WARN_RL(LOG_MODULE, &rl, "Trying to execute encap uctp action on packet with no ip.");
@@ -770,18 +771,15 @@ decap_uctp(struct packet *pkt, struct ofl_action_header *act UNUSED){
 
 	packet_handle_std_validate(pkt->handle_std);
 	if (pkt->handle_std->proto->eth != NULL && pkt->handle_std->proto->uctp != NULL) {
-		struct eth_header *eth = pkt->handle_std->proto->eth;
-		struct vlan_header *uctp = pkt->handle_std->proto->uctp;
+		//struct eth_header *eth = pkt->handle_std->proto->eth;
+		//struct vlan_header *uctp = pkt->handle_std->proto->uctp;
 
 		uint8_t move_count = ETH_HEADER_LEN + IP_HEADER_LEN + UDP_HEADER_LEN + UCTP_HEADER_LEN;
-		size_t move_size;
-		move_size = pkt->buffer->size - move_count;
-
 		pkt->buffer->data = (uint8_t *)pkt->buffer->data + move_count;
 		pkt->buffer->size -= move_count;
 
 		//TODO Zoltan: revalidating might not be necessary in all cases
-		pkt->handle_std->valid = false;
+		//pkt->handle_std->valid = false;
 	} else {
 		VLOG_WARN_RL(LOG_MODULE, &rl, "Trying to execute DECAP_UCTP action on packet with no uctp.");
 	}
