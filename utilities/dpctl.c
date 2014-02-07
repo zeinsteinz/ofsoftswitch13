@@ -184,7 +184,7 @@ static int
 parse32(char *str, struct names32 *names, size_t names_num, uint32_t max, uint32_t *val);
 
 static int
-parse32m(char *str, struct names32 *names, size_t names_num, uint32_t max, uint32_t *val, uint32_t *mask);
+parse32m(char *str, struct names32 *names, size_t names_num, uint32_t max, uint32_t *val, uint32_t **mask);
 
 static struct ofl_exp_msg dpctl_exp_msg =
         {.pack      = ofl_exp_msg_pack,
@@ -1457,11 +1457,11 @@ parse_match(char *str, struct ofl_match_header **match) {
          if (strncmp(token, MATCH_IPV6_FLABEL KEY_VAL, strlen(MATCH_IPV6_FLABEL KEY_VAL)) == 0) {
             uint32_t ipv6_label;
             uint32_t *mask;
-            if (parse32m(token + strlen(MATCH_IPV6_FLABEL KEY_VAL), NULL, 0, 0xfffff, &ipv6_label, mask)) {
+            if (parse32m(token + strlen(MATCH_IPV6_FLABEL KEY_VAL), NULL, 0, 0xfffff, &ipv6_label, &mask)) {
                 ofp_fatal(0, "Error parsing ipv6_label: %s.", token);
             }
             else
-              if(mask == NULL)
+              if(*mask == NULL)
                 ofl_structs_match_put32(m, OXM_OF_IPV6_FLABEL, ipv6_label);
               else
                 ofl_structs_match_put32m(m, OXM_OF_IPV6_FLABEL_W, ipv6_label, *mask);
@@ -1561,7 +1561,7 @@ parse_match(char *str, struct ofl_match_header **match) {
         /* User Tag */
         if (strncmp(token, MATCH_USER_TAG KEY_VAL, strlen(MATCH_USER_TAG KEY_VAL)) == 0) {
         	uint32_t user_tag;
-        	uint32_t mask;
+        	uint32_t *mask;
 
 			if (parse32m(token + strlen(MATCH_USER_TAG KEY_VAL), NULL, 0, 0xffffffff, &user_tag, &mask)) {
 				ofp_fatal(0, "Error parsing user_tag: %s.", token);
@@ -1573,7 +1573,7 @@ parse_match(char *str, struct ofl_match_header **match) {
 					ofl_structs_match_put32(m,OXM_OF_USER_TAG,user_tag);
 				}
 				else
-					ofl_structs_match_put32m(m,OXM_OF_USER_TAG_W,user_tag,mask);
+					ofl_structs_match_put32m(m,OXM_OF_USER_TAG_W,user_tag,*mask);
 			}
 
         	//if (sscanf(token, MATCH_USER_TAG KEY_VAL "0x%"SCNx32"", (&user_tag)) != 1) {
@@ -2757,8 +2757,8 @@ parse32(char *str, struct names32 *names, size_t names_num, uint32_t max, uint32
 }
 
 static int
-parse32m(char *str, struct names32 *names, size_t names_num, uint32_t max, uint32_t *val, uint32_t *mask){
-    size_t i;
+parse32m(char *str, struct names32 *names, size_t names_num, uint32_t max, uint32_t *val, uint32_t **mask){
+	size_t i;
     char *token, *saveptr = NULL;
 
     for (i=0; i<names_num; i++) {
@@ -2782,15 +2782,15 @@ parse32m(char *str, struct names32 *names, size_t names_num, uint32_t max, uint3
 
     if(strcmp(saveptr,"") == 0)
     {
-        mask = NULL;
+        *mask = NULL;
     }
     else
     {
         if(saveptr[1]=='x')
         {
-        	sscanf(saveptr, "%"SCNx32"", mask);
+        	sscanf(saveptr, "%"SCNx32"", *mask);
         }
-        else sscanf(saveptr, "%"SCNu32"", mask);
+        else sscanf(saveptr, "%"SCNu32"", *mask);
     }
     return 0;
 }
