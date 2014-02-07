@@ -231,8 +231,6 @@ ofl_actions_pack(struct ofl_action_header *src, struct ofp_action_header *dst, u
 						value = htonl(*((uint32_t*) sa->field->value));
 					else  
 						value = *((uint32_t*) sa->field->value);
-					fprintf(stderr,"enter set pack\n");
-					fprintf(stderr,"%u\n",value);
 					memcpy(data + (sizeof(struct ofp_action_set_field)), &value, OXM_LENGTH(sa->field->header));
                     break;
                 }

@@ -672,7 +672,7 @@ encap_uctp(struct packet *pkt, struct ofl_action_push *act){
 	// TODO Zoltan: if 802.3, check if new length is still valid
     packet_handle_std_validate(pkt->handle_std);
     if (pkt->handle_std->proto->ipv4 != NULL) {
-    	fprintf(stderr,"process encap\n");
+    	//fprintf(stderr,"process encap\n");
     	struct eth_header  *eth, *new_eth;
     	struct ip_header   *ipv4, *new_ipv4;
         struct udp_header  *new_udp;
