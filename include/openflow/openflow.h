@@ -337,7 +337,8 @@ enum oxm_ofb_match_fields {
     OFPXMT_OFB_PBB_ISID = 37,       /* PBB I-SID. */
     OFPXMT_OFB_TUNNEL_ID = 38,      /* Logical Port Metadata. */
     OFPXMT_OFB_IPV6_EXTHDR = 39,    /* IPv6 Extension Header pseudo-field */
-    OFPXMT_OFB_USER_TAG = 40             /* My adding match field */
+    OFPXMT_OFB_USER_TAG = 40,       /* My adding match field */
+    OFPXMT_OFB_USER_FLAG = 41		/* My adding match field */
 };
 
 /* The VLAN id is 12-bits, so we can use the entire 16 bits to indicate

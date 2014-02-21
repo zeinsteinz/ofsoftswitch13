@@ -1582,7 +1582,25 @@ parse_match(char *str, struct ofl_match_header **match) {
    	        //else ofl_structs_match_put32(m, OXM_OF_USER_TAG, user_tag);
 			continue;
         }
+        /* User Flag */
+        if (strncmp(token, MATCH_USER_FLAG KEY_VAL, strlen(MATCH_USER_FLAG KEY_VAL)) == 0) {
+        	uint32_t user_flag;
+        	uint32_t *mask;
 
+			if (parse32m(token + strlen(MATCH_USER_FLAG KEY_VAL), NULL, 0, 0xffffffff, &user_flag, &mask)) {
+				ofp_fatal(0, "Error parsing user_tag: %s.", token);
+			}
+			else
+			{
+				if(mask == NULL)
+				{
+					ofl_structs_match_put32(m,OXM_OF_USER_FLAG,user_flag);
+				}
+				else
+					ofl_structs_match_put32m(m,OXM_OF_USER_FLAG_W,user_flag,*mask);
+			}
+			continue;
+        }
         ofp_fatal(0, "Error parsing match arg: %s.", token);
     }
     
@@ -1873,6 +1891,17 @@ parse_set_field(char *token, struct ofl_action_set_field *act) {
             act->field = (struct ofl_match_tlv*) malloc(sizeof(struct ofl_match_tlv));
             act->field->header = OXM_OF_USER_TAG;
             act->field->value = (uint8_t*) user_tag;
+        }
+        return 0;
+    }
+    if (strncmp(token, MATCH_USER_FLAG KEY_VAL2, strlen(MATCH_USER_FLAG KEY_VAL2)) == 0) {
+        uint32_t* user_flag = xmalloc(sizeof(uint32_t));
+        if (parse32(token + strlen(MATCH_USER_FLAG KEY_VAL2), NULL, 0, 0xffffffff, user_flag)) {
+            ofp_fatal(0, "Error parsing user_flag: %s.", token);
+        }else{
+            act->field = (struct ofl_match_tlv*) malloc(sizeof(struct ofl_match_tlv));
+            act->field->header = OXM_OF_USER_FLAG;
+            act->field->value = (uint8_t*) user_flag;
         }
         return 0;
     }

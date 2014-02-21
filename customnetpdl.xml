@@ -1993,7 +1993,7 @@
 <protocol name="uctp" longname="UCTP (User Customized Tag Protocol)" >
 	<format>
 		<fields>
-			<field type="fixed" name="flag" longname="Function Flag" size="4" showtemplate="FieldDec"/>
+			<field type="fixed" name="flag" longname="{0x8000 41}" size="4" showtemplate="FieldDec"/>
 			<field type="fixed" name="tag" longname="{0x8000 40}" size="4" showtemplate="FieldDec"/>
 		</fields>
 	</format>

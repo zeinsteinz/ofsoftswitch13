@@ -456,6 +456,14 @@ parse_oxm_entry(struct ofl_match *match, const struct oxm_field *f,
             ofl_structs_match_put32m(match, f->header,*((uint32_t*) value),*((uint32_t*) mask));
             return 0;
         }
+        case OFI_OXM_OF_USER_FLAG:{
+            ofl_structs_match_put32(match, f->header, *((uint32_t*) value));
+            return 0;
+        }
+        case OFI_OXM_OF_USER_FLAG_W:{
+            ofl_structs_match_put32m(match, f->header,*((uint32_t*) value),*((uint32_t*) mask));
+            return 0;
+        }
         case NUM_OXM_FIELDS:
             NOT_REACHED();
     }
@@ -786,7 +794,7 @@ int oxm_put_match(struct ofpbuf *buf, struct ofl_match *omt){
 					if(!has_mask)
 						if (oft->header == OXM_OF_IPV4_DST || oft->header == OXM_OF_IPV4_SRC
 							||oft->header == OXM_OF_ARP_SPA || oft->header == OXM_OF_ARP_TPA
-							||oft->header == OXM_OF_USER_TAG)
+							||oft->header == OXM_OF_USER_TAG||oft->header == OXM_OF_USER_FLAG)
 							oxm_put_32(buf,oft->header, value);
 						else
 							oxm_put_32(buf,oft->header, htonl(value));
@@ -795,7 +803,7 @@ int oxm_put_match(struct ofpbuf *buf, struct ofl_match *omt){
                          memcpy(&mask,oft->value + length ,sizeof(uint32_t));
 						 if (oft->header == OXM_OF_IPV4_DST_W|| oft->header == OXM_OF_IPV4_SRC_W
 							||oft->header == OXM_OF_ARP_SPA_W || oft->header == OXM_OF_ARP_TPA_W
-							||oft->header == OXM_OF_USER_TAG_W)
+							||oft->header == OXM_OF_USER_TAG_W||oft->header == OXM_OF_USER_FLAG_W)
 						 {
                             oxm_put_32w(buf, oft->header, value, mask);
                          }

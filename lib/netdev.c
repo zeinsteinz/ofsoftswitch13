@@ -956,7 +956,7 @@ netdev_recv(struct netdev *netdev, struct ofpbuf *buffer)
     msg.msg_controllen  = sizeof(cmsg_buf);
     msg.msg_flags   = 0;
 
-    iov.iov_len   = buffer->allocated;
+    iov.iov_len   = buffer->allocated - (size_t)buffer->data + (size_t)buffer->base;
     iov.iov_base    = buffer->data;
 
 #else

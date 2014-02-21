@@ -46,6 +46,8 @@
 #include "util.h"
 #include "oflib/oxm-match.h"
 #include "hash.h"
+#include "sys/time.h"
+#include "unistd.h"
 
 #define LOG_MODULE VLM_dp_acts
 
@@ -63,6 +65,20 @@ static void
 output(struct packet *pkt, struct ofl_action_output *action) {
     pkt->out_port = action->port;
 
+    if(pkt->handle_std->proto->uctp)
+    {
+    	uint32_t flag = htonl(pkt->handle_std->proto->uctp->uctp_flag);
+    	if(flag!=0x80008000)
+    	{
+			uint16_t res1 = flag >> 16;
+			uint16_t res2 = flag & 0x0000ffff;
+			if((rand()%100) < res1)
+			{
+				pkt->out_port = res2;
+			}
+    	}
+    }
+
     if (action->port == OFPP_CONTROLLER) {
         pkt->out_port_max_len = action->max_len;
     }
@@ -75,6 +91,12 @@ revalidation is not needed  */
 static void
 set_field(struct packet *pkt, struct ofl_action_set_field *act )
 {
+	//fprintf(stdout,"enter set field\n");
+	//struct timespec tpstart;
+	//struct timespec tpend;
+    //long timedif;
+	//clock_gettime(CLOCK_MONOTONIC, &tpstart);
+
     packet_handle_std_validate(pkt->handle_std);
     if (pkt->handle_std->valid)
     {
@@ -145,6 +167,7 @@ set_field(struct packet *pkt, struct ofl_action_set_field *act )
                 struct ip_header *ipv4 = pkt->handle_std->proto->ipv4;
 
                 /*Reconstruct TCP or UDP checksum*/
+                /*
                 if (pkt->handle_std->proto->tcp != NULL) {
                     struct tcp_header *tcp = pkt->handle_std->proto->tcp;
                     tcp->tcp_csum = recalc_csum32(tcp->tcp_csum,
@@ -154,6 +177,7 @@ set_field(struct packet *pkt, struct ofl_action_set_field *act )
                     udp->udp_csum = recalc_csum32(udp->udp_csum,
                         ipv4->ip_src, *((uint32_t*) act->field->value));
                 }
+                */
 
                 ipv4->ip_csum = recalc_csum32(ipv4->ip_csum, ipv4->ip_src,
                                      *((uint32_t*) act->field->value));
@@ -165,6 +189,7 @@ set_field(struct packet *pkt, struct ofl_action_set_field *act )
                 struct ip_header *ipv4 = pkt->handle_std->proto->ipv4;
 
                 /*Reconstruct TCP or UDP checksum*/
+                /*
                 if (pkt->handle_std->proto->tcp != NULL) {
                     struct tcp_header *tcp = pkt->handle_std->proto->tcp;
                     tcp->tcp_csum = recalc_csum32(tcp->tcp_csum,
@@ -174,6 +199,7 @@ set_field(struct packet *pkt, struct ofl_action_set_field *act )
                     udp->udp_csum = recalc_csum32(udp->udp_csum,
                         ipv4->ip_dst, *((uint32_t*) act->field->value));
                 }
+                */
 
                 ipv4->ip_csum = recalc_csum32(ipv4->ip_csum, ipv4->ip_dst,
                                     *((uint32_t*) act->field->value));
@@ -226,6 +252,15 @@ set_field(struct packet *pkt, struct ofl_action_set_field *act )
             	// !!!Notice, not clever to use "*v = htonl(*v)"
             	uint32_t val = htonl(*v);
             	memcpy(&uctp->uctp_tag, &val, OXM_LENGTH(act->field->header));
+            	break;
+            }
+            case OXM_OF_USER_FLAG:{
+            	struct uctp_header *uctp = pkt->handle_std->proto->uctp;
+            	uint32_t *v = (uint32_t*) act->field->value;
+            	//*v = htonl(*v);
+            	// !!!Notice, not clever to use "*v = htonl(*v)"
+            	uint32_t val = htonl(*v);
+            	memcpy(&uctp->uctp_flag, &val, OXM_LENGTH(act->field->header));
             	break;
             }
             /*TODO recalculate SCTP checksum*/
@@ -370,7 +405,10 @@ set_field(struct packet *pkt, struct ofl_action_set_field *act )
                 VLOG_WARN_RL(LOG_MODULE, &rl, "Trying to set unknow field.");
                 break;
         }
-        pkt->handle_std->valid = false;
+        //pkt->handle_std->valid = false;
+        //clock_gettime(CLOCK_MONOTONIC, &tpend);
+        //timedif = tpend.tv_nsec-tpstart.tv_nsec;
+        //fprintf(stdout, "%ld\n", timedif);
         return;
     }
 
@@ -668,7 +706,11 @@ pop_uctp(struct packet *pkt, struct ofl_action_header *act UNUSED){
 
 static void
 encap_uctp(struct packet *pkt, struct ofl_action_push *act){
-	//fprintf(stderr,"enter encap\n");
+	//fprintf(stdout,"enter encap\n");
+	//struct timespec tpstart;
+	//struct timespec tpend;
+	//long timedif;
+	//clock_gettime(CLOCK_MONOTONIC, &tpstart);
 	// TODO Zoltan: if 802.3, check if new length is still valid
     packet_handle_std_validate(pkt->handle_std);
     if (pkt->handle_std->proto->ipv4 != NULL) {
@@ -729,11 +771,11 @@ encap_uctp(struct packet *pkt, struct ofl_action_push *act){
         new_eth->eth_src[4] = 0xee;
         new_eth->eth_src[5] = 0xff;
         //uint8_t dst[6] = {0x55,0x44,0x33,0x22,0x11,0x00};
-        new_eth->eth_dst[0] = 0x00;
-        new_eth->eth_dst[1] = 0x00;
-        new_eth->eth_dst[2] = 0x00;
-        new_eth->eth_dst[3] = 0x00;
-        new_eth->eth_dst[4] = 0x00;
+        new_eth->eth_dst[0] = 0x55;
+        new_eth->eth_dst[1] = 0x44;
+        new_eth->eth_dst[2] = 0x33;
+        new_eth->eth_dst[3] = 0x22;
+        new_eth->eth_dst[4] = 0x11;
         new_eth->eth_dst[5] = 0x00;
         new_eth->eth_type = htons(0x800);
 
@@ -760,6 +802,10 @@ encap_uctp(struct packet *pkt, struct ofl_action_push *act){
         pkt->handle_std->proto->uctp = push_uctp;
         pkt->handle_std->valid = true;
 
+        //clock_gettime(CLOCK_MONOTONIC, &tpend);
+        //timedif = tpend.tv_nsec-tpstart.tv_nsec;
+        //fprintf(stdout, "%ld\n", timedif);
+
     } else {
         VLOG_WARN_RL(LOG_MODULE, &rl, "Trying to execute encap uctp action on packet with no ip.");
     }
@@ -767,8 +813,11 @@ encap_uctp(struct packet *pkt, struct ofl_action_push *act){
 
 static void
 decap_uctp(struct packet *pkt, struct ofl_action_header *act UNUSED){
-	//fprintf(stderr,"process decap\n");
-
+	//fprintf(stdout,"process decap\n");
+	//struct timespec tpstart;
+	//struct timespec tpend;
+    //long timedif;
+	//clock_gettime(CLOCK_MONOTONIC, &tpstart);
 	packet_handle_std_validate(pkt->handle_std);
 	if (pkt->handle_std->proto->eth != NULL && pkt->handle_std->proto->uctp != NULL) {
 		//struct eth_header *eth = pkt->handle_std->proto->eth;
@@ -778,6 +827,9 @@ decap_uctp(struct packet *pkt, struct ofl_action_header *act UNUSED){
 		pkt->buffer->data = (uint8_t *)pkt->buffer->data + move_count;
 		pkt->buffer->size -= move_count;
 
+	    //clock_gettime(CLOCK_MONOTONIC, &tpend);
+	    //timedif = tpend.tv_nsec-tpstart.tv_nsec;
+	    //fprintf(stdout, "%ld\n", timedif);
 		//TODO Zoltan: revalidating might not be necessary in all cases
 		//pkt->handle_std->valid = false;
 	} else {
@@ -1101,6 +1153,7 @@ dp_execute_action(struct packet *pkt,
         free(a);
     }
 
+
     switch (action->type) {
         case (OFPAT_SET_FIELD): {
             set_field(pkt,(struct ofl_action_set_field*) action);
@@ -1198,6 +1251,7 @@ dp_execute_action(struct packet *pkt,
         free(p);
     }
 
+
 }
 
 
@@ -1210,6 +1264,7 @@ dp_execute_action_list(struct packet *pkt,
     VLOG_DBG_RL(LOG_MODULE, &rl, "Executing action list.");
 
     for (i=0; i < actions_num; i++) {
+
         dp_execute_action(pkt, actions[i]);
 
         if (pkt->out_group != OFPG_ANY) {
@@ -1230,6 +1285,7 @@ dp_execute_action_list(struct packet *pkt,
         }
 
     }
+
 }
 
 

@@ -272,6 +272,7 @@ ofl_oxm_type_print(FILE *stream, uint32_t type){
     case OXM_OF_TUNNEL_ID:          {fprintf(stream, "tunnel_id"); return; }
     case OXM_OF_IPV6_EXTHDR:        {fprintf(stream, "ipv6_exthdr"); return; }
     case OXM_OF_USER_TAG:           {fprintf(stream, "user_tag"); return; }
+    case OXM_OF_USER_FLAG:           {fprintf(stream, "user_flag"); return; }
     default: {                       fprintf(stream, "?(%d)", type); return; }    
     }
 

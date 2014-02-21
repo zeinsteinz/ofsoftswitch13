@@ -51,7 +51,7 @@
 #include "hash.h"
 #include "oflib/oxm-match.h"
 #include "vlog.h"
-
+#include "time.h"
 
 #define LOG_MODULE VLM_pipeline
 
@@ -174,6 +174,7 @@ pipeline_process_packet(struct pipeline *pl, struct packet *pkt) {
                /* Cookie field is set 0xffffffffffffffff
                 because we cannot associate it to any
                 particular flow */
+
                 action_set_execute(pkt->action_set, pkt, 0xffffffffffffffff);
                 packet_destroy(pkt);
                 return;

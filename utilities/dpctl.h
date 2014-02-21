@@ -220,6 +220,7 @@ static struct names16 band_names[] = {
 #define MATCH_TUNNEL_ID      "tunn_id"    
 #define MATCH_EXT_HDR        "ext_hdr"
 #define MATCH_USER_TAG       "user_tag"
+#define MATCH_USER_FLAG      "user_flag"
 
 #define GROUP_MOD_COMMAND "cmd"
 #define GROUP_MOD_TYPE    "type"

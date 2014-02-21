@@ -569,8 +569,9 @@ extern "C" int nblink_packet_parse(struct ofpbuf * pktin,  struct ofl_match * pk
 
             if (protocol_Name.compare("uctp") == 0 && pkt_proto->uctp == NULL)
             {
-            	//fprintf(stderr,"enter uctp\n");
                 pkt_proto->uctp = (struct uctp_header *) ((uint8_t*) pktin->data + proto->Position);
+                PDMLReader->GetPDMLField(proto->Name, (char*) "flag", proto->FirstField, &field);
+                nblink_extract_proto_fields(pktin, field, pktout, OXM_OF_USER_FLAG);
                 PDMLReader->GetPDMLField(proto->Name, (char*) "tag", proto->FirstField, &field);
                 nblink_extract_proto_fields(pktin, field, pktout, OXM_OF_USER_TAG);
             }

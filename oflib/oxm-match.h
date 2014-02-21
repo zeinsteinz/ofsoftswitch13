@@ -227,6 +227,9 @@
 #define OXM_OF_USER_TAG  OXM_HEADER      (0x8000, 40, 4)
 #define OXM_OF_USER_TAG_W  OXM_HEADER_W  (0x8000, 40, 4)
 
+#define OXM_OF_USER_FLAG  OXM_HEADER      (0x8000, 41, 4)
+#define OXM_OF_USER_FLAG_W  OXM_HEADER_W  (0x8000, 41, 4)
+
 /* ## ------------------------------- ## */
 /* ## IPv6 compatible fields. ## */
 /* ## ------------------------------- ## */
@@ -287,7 +290,7 @@ enum oxm_field_index {
 #define DEFINE_FIELD(HEADER,DL_TYPES, NW_PROTO, MASKABLE) \
         OFI_OXM_##HEADER,
 #include "oxm-match.def"
-    NUM_OXM_FIELDS = 58
+    NUM_OXM_FIELDS = 60
 };
 
 struct oxm_field {
