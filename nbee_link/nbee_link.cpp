@@ -354,11 +354,32 @@ int nblink_extract_proto_fields(struct ofpbuf * pktin, _nbPDMLField * field, str
     return 0;
 }
 
+int fast_parse(struct ofpbuf * pktin,  struct ofl_match * pktout, struct protocols_std * pkt_proto)
+{
+	if(*(uint32_t *)(pktin->data + 42)==0x800080)
+	{
+		//fprintf(stderr,"find uctp\n");
+		pkt_proto->uctp = (struct uctp_header *)(pktin->data + 42);
+		//fprintf(stderr,"flag: %x\n",pkt_proto->uctp->uctp_flag);
+		//fprintf(stderr,"tag: %x\n",pkt_proto->uctp->uctp_tag);
+		ofl_structs_match_put32(pktout, OXM_OF_USER_FLAG, ntohl(pkt_proto->uctp->uctp_flag));
+		ofl_structs_match_put32(pktout, OXM_OF_USER_TAG, ntohl(pkt_proto->uctp->uctp_tag));
+
+		pkt_proto->eth = (struct eth_header *)(pktin->data);
+		pkt_proto->ipv4 = (struct ip_header *)(pktin->data + 14);
+		pkt_proto->udp = (struct udp_header *)(pktin->data + 34);
+
+		return 1;
+	}
+
+	return 0;
+}
 
 extern "C" int nblink_packet_parse(struct ofpbuf * pktin,  struct ofl_match * pktout, struct protocols_std * pkt_proto)
 {
-
     protocol_reset(pkt_proto);
+    if(fast_parse(pktin, pktout, pkt_proto))return 1;
+
     pkhdr->caplen = pktin->size; //need this information
     pkhdr->len = pktin->size; //need this information
 
@@ -379,7 +400,9 @@ extern "C" int nblink_packet_parse(struct ofpbuf * pktin,  struct ofl_match * pk
         // Something went wrong
         return -1;
     }
-    //fprintf(stderr, "After decode\n");
+
+
+
     PDMLReader->GetCurrentPacket(&curr_packet);
 
     _nbPDMLProto * proto;

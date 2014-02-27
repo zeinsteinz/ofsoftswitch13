@@ -51,6 +51,7 @@
 #include "oflib-exp/ofl-exp-openflow.h"
 #include "oflib/ofl-log.h"
 #include "util.h"
+#include "time.h"
 
 #include "vlog.h"
 #define LOG_MODULE VLM_dp_ports
