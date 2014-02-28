@@ -366,6 +366,7 @@ int fast_parse(struct ofpbuf * pktin,  struct ofl_match * pktout, struct protoco
 		ofl_structs_match_put32(pktout, OXM_OF_USER_TAG, ntohl(pkt_proto->uctp->uctp_tag));
 
 		pkt_proto->eth = (struct eth_header *)(pktin->data);
+		ofl_structs_match_put16(pktout, OXM_OF_ETH_TYPE, ntohs(pkt_proto->eth->eth_type));
 		pkt_proto->ipv4 = (struct ip_header *)(pktin->data + 14);
 		pkt_proto->udp = (struct udp_header *)(pktin->data + 34);
 
@@ -375,10 +376,71 @@ int fast_parse(struct ofpbuf * pktin,  struct ofl_match * pktout, struct protoco
 	return 0;
 }
 
+int simple_parse(struct ofpbuf * pktin,  struct ofl_match * pktout, struct protocols_std * pkt_proto)
+{
+	if(fast_parse(pktin, pktout, pkt_proto))return 1;
+	pkt_proto->eth = (struct eth_header *)(pktin->data);
+	ofl_structs_match_put_eth(pktout, OXM_OF_ETH_DST,pkt_proto->eth->eth_dst);
+	ofl_structs_match_put_eth(pktout, OXM_OF_ETH_SRC,pkt_proto->eth->eth_src);
+	ofl_structs_match_put16(pktout, OXM_OF_ETH_TYPE, ntohs(pkt_proto->eth->eth_type));
+
+	if(pkt_proto->eth->eth_type==0x0008)
+	{
+		//IPV4
+		pkt_proto->ipv4 = (struct ip_header *)(pktin->data + 14);
+		ofl_structs_match_put32(pktout, OXM_OF_IPV4_SRC, pkt_proto->ipv4->ip_src);
+		ofl_structs_match_put32(pktout, OXM_OF_IPV4_DST, pkt_proto->ipv4->ip_dst);
+		ofl_structs_match_put8(pktout, OXM_OF_IP_PROTO, pkt_proto->ipv4->ip_proto);
+		if(pkt_proto->ipv4->ip_proto==1)
+		{
+			//ICMP
+			pkt_proto->icmp = (struct icmp_header *)(pktin->data + 34);
+			ofl_structs_match_put8(pktout, OXM_OF_ICMPV4_TYPE, pkt_proto->icmp->icmp_type);
+			ofl_structs_match_put8(pktout, OXM_OF_ICMPV4_CODE, pkt_proto->icmp->icmp_code);
+		}
+		else if(pkt_proto->ipv4->ip_proto==6)
+		{
+			//TCP
+			pkt_proto->tcp = (struct tcp_header *)(pktin->data + 34);
+			ofl_structs_match_put16(pktout, OXM_OF_TCP_SRC, ntohs(pkt_proto->tcp->tcp_src));
+			ofl_structs_match_put16(pktout, OXM_OF_TCP_DST, ntohs(pkt_proto->tcp->tcp_dst));
+		}
+		else if(pkt_proto->ipv4->ip_proto==17)
+		{
+			//UDP
+			pkt_proto->udp = (struct udp_header *)(pktin->data + 34);
+			ofl_structs_match_put16(pktout, OXM_OF_UDP_SRC, ntohs(pkt_proto->udp->udp_src));
+			ofl_structs_match_put16(pktout, OXM_OF_UDP_DST, ntohs(pkt_proto->udp->udp_dst));
+			if(pkt_proto->udp->udp_dst==0xf0)
+			{
+				//UCTP
+				pkt_proto->uctp = (struct uctp_header *)(pktin->data + 42);
+				ofl_structs_match_put32(pktout, OXM_OF_USER_FLAG, ntohl(pkt_proto->uctp->uctp_flag));
+				ofl_structs_match_put32(pktout, OXM_OF_USER_TAG, ntohl(pkt_proto->uctp->uctp_tag));
+			}
+		}
+		else return 0;
+	}
+	else if(pkt_proto->eth->eth_type==0x0608)
+	{
+		//ARP
+		pkt_proto->arp = (struct arp_eth_header *)(pktin->data + 14);
+
+	}
+	else if(pkt_proto->eth->eth_type==0xdd86)
+	{
+		//IPV6
+		pkt_proto->ipv6 = (struct ipv6_header *)(pktin->data + 14);
+	}
+	else return 0;
+	return 1;
+}
+
 extern "C" int nblink_packet_parse(struct ofpbuf * pktin,  struct ofl_match * pktout, struct protocols_std * pkt_proto)
 {
     protocol_reset(pkt_proto);
-    if(fast_parse(pktin, pktout, pkt_proto))return 1;
+    //if(fast_parse(pktin, pktout, pkt_proto))return 1;
+    if(simple_parse(pktin, pktout, pkt_proto))return 1;
 
     pkhdr->caplen = pktin->size; //need this information
     pkhdr->len = pktin->size; //need this information
