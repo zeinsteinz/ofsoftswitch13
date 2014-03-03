@@ -157,7 +157,9 @@ pipeline_process_packet(struct pipeline *pl, struct packet *pkt) {
             VLOG_DBG_RL(LOG_MODULE, &rl, "searching table entry for packet match: %s.", m);
             free(m);
         }
+
         entry = flow_table_lookup(table, pkt);
+
         if (entry != NULL) {
 	        if (VLOG_IS_DBG_ENABLED(LOG_MODULE)) {
                 char *m = ofl_structs_flow_stats_to_string(entry->stats, pkt->dp->exp);
@@ -165,16 +167,16 @@ pipeline_process_packet(struct pipeline *pl, struct packet *pkt) {
                 free(m);
             }
             pkt->handle_std->table_miss = is_table_miss(entry);
+
             execute_entry(pl, entry, &next_table, &pkt);
+
             /* Packet could be destroyed by a meter instruction */
             if (!pkt)
                 return;
-            //fprintf(stderr,"goto next\n");
             if (next_table == NULL) {
                /* Cookie field is set 0xffffffffffffffff
                 because we cannot associate it to any
                 particular flow */
-
                 action_set_execute(pkt->action_set, pkt, 0xffffffffffffffff);
                 packet_destroy(pkt);
                 return;
@@ -476,7 +478,6 @@ execute_entry(struct pipeline *pl, struct flow_entry *entry,
             Write-Metadata
             Goto-Table
     */
-
     size_t i;
     struct ofl_instruction_header *inst;
 

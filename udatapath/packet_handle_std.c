@@ -53,8 +53,6 @@ packet_handle_std_validate(struct packet_handle_std *handle) {
 
     if(handle->valid)
         return;
-    //struct timespec tt1, tt2;
-    //clock_gettime(CLOCK_REALTIME, &tt1);
 
     struct ofl_match_tlv * iter, *next;
     HMAP_FOR_EACH_SAFE(iter, next, struct ofl_match_tlv, hmap_node, &handle->match.match_fields){
@@ -63,12 +61,11 @@ packet_handle_std_validate(struct packet_handle_std *handle) {
     }
     ofl_structs_match_init(&handle->match);
     if (nblink_packet_parse(handle->pkt->buffer,&handle->match,
-                            handle->proto) < 0)
+                            handle->proto, handle->inner_check) < 0)
         return;
 
     handle->valid = true;
-    //clock_gettime(CLOCK_REALTIME, &tt2);
-    //fprintf(stderr,"tc: %ld\n",tt2.tv_nsec - tt1.tv_nsec);
+
     /* Add in_port value to the hash_map */
     ofl_structs_match_put32(&handle->match, OXM_OF_IN_PORT, handle->pkt->in_port);
     /*Add metadata value to the hash_map */
@@ -78,7 +75,7 @@ packet_handle_std_validate(struct packet_handle_std *handle) {
 
 
 struct packet_handle_std *
-packet_handle_std_create(struct packet *pkt) {
+packet_handle_std_create(struct packet *pkt, bool inner) {
 
 	struct packet_handle_std *handle = xmalloc(sizeof(struct packet_handle_std));
 	handle->proto = xmalloc(sizeof(struct protocols_std));
@@ -87,6 +84,7 @@ packet_handle_std_create(struct packet *pkt) {
 	hmap_init(&handle->match.match_fields);
 
 	handle->valid = false;
+	handle->inner_check = inner;
 	packet_handle_std_validate(handle);
 
 	return handle;

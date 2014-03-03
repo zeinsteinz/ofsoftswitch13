@@ -145,6 +145,7 @@ static struct names16 action_names[] = {
         {OFPAT_POP_UCTP,       "pop_uctp"},
         {OFPAT_ENCAP_UCTP,     "encap_uctp"},
         {OFPAT_DECAP_UCTP,     "decap_uctp"},
+        {OFPAT_INNER_CHECK,    "inner_check"},
         {OFPAT_PUSH_PBB,       "push_pbb"},
         {OFPAT_POP_PBB,        "pop_pbb"},
         {OFPAT_PUSH_MPLS,      "push_mpls"},

@@ -55,11 +55,12 @@ struct packet_handle_std {
                                            executing any methods. */
    bool						   table_miss; /*Packet was matched
    											against table miss flow*/
+   bool						   inner_check;
 };
 
 /* Creates a handler */
 struct packet_handle_std *
-packet_handle_std_create(struct packet *pkt);
+packet_handle_std_create(struct packet *pkt, bool inner);
 
 /* Destroys a handler */
 void

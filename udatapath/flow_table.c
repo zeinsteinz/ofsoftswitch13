@@ -70,7 +70,7 @@ struct ofl_action_header actions[] = { {OFPAT_OUTPUT, 4},
                   {OFPAT_DEC_MPLS_TTL, 4},{OFPAT_PUSH_VLAN, 4},{OFPAT_POP_VLAN, 4}, {OFPAT_PUSH_MPLS, 4},
                   {OFPAT_POP_MPLS, 4},{OFPAT_SET_QUEUE, 4}, {OFPAT_GROUP, 4}, {OFPAT_SET_NW_TTL, 4}, {OFPAT_DEC_NW_TTL, 4}, 
                   {OFPAT_SET_FIELD, 4}, {OFPAT_PUSH_PBB, 4}, {OFPAT_POP_PBB, 4}, {OFPAT_PUSH_UCTP, 4}, {OFPAT_POP_UCTP, 4},
-                  {OFPAT_ENCAP_UCTP, 4}, {OFPAT_DECAP_UCTP, 4}} ;
+                  {OFPAT_ENCAP_UCTP, 4}, {OFPAT_DECAP_UCTP, 4}, {OFPAT_INNER_CHECK, 4}} ;
 
 /* When inserting an entry, this function adds the flow entry to the list of
  * hard and idle timeout entries, if appropriate. */

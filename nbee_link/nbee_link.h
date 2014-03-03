@@ -54,7 +54,7 @@ int nblink_initialize(void);
 #ifdef __cplusplus
 extern "C"
 #endif
-int nblink_packet_parse(struct ofpbuf * pktin, struct ofl_match * pktout, struct protocols_std * pkt_proto);
+int nblink_packet_parse(struct ofpbuf * pktin, struct ofl_match * pktout, struct protocols_std * pkt_proto, bool inner);
 
 
 

@@ -204,6 +204,7 @@ ofl_action_type_print(FILE *stream, uint16_t type) {
         case OFPAT_POP_UCTP: {       fprintf(stream, "uctp_pop"); return; }
         case OFPAT_ENCAP_UCTP: {     fprintf(stream, "encap_uctp"); return;}
         case OFPAT_DECAP_UCTP: {     fprintf(stream, "decap_uctp"); return;}
+        case OFPAT_INNER_CHECK:{     fprintf(stream, "inner_check");return;}
         case OFPAT_PUSH_MPLS: {      fprintf(stream, "mpls_psh"); return; }
         case OFPAT_POP_MPLS: {       fprintf(stream, "mpls_pop"); return; }
         case OFPAT_SET_QUEUE: {      fprintf(stream, "queue"); return; }

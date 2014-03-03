@@ -105,15 +105,16 @@ handle_control_get_config_request(struct datapath *dp,
 static ofl_err
 handle_control_set_config(struct datapath *dp, struct ofl_msg_set_config *msg,
                                                 const struct sender *sender UNUSED) {
-    uint16_t flags;
+    //uint16_t flags;
 
-    flags = msg->config->flags & OFPC_FRAG_MASK;
-    if ((flags & OFPC_FRAG_MASK) != OFPC_FRAG_NORMAL
-        && (flags & OFPC_FRAG_MASK) != OFPC_FRAG_DROP) {
-        flags = (flags & ~OFPC_FRAG_MASK) | OFPC_FRAG_DROP;
-    }
+    //flags = msg->config->flags & OFPC_FRAG_MASK;
+    //if ((flags & OFPC_FRAG_MASK) != OFPC_FRAG_NORMAL
+    //    && (flags & OFPC_FRAG_MASK) != OFPC_FRAG_DROP) {
+    //    flags = (flags & ~OFPC_FRAG_MASK) | OFPC_FRAG_DROP;
+    //}
 
-    dp->config.flags = flags;
+    //dp->config.flags = flags;
+	dp->config.flags = msg->config->flags;
     dp->config.miss_send_len = msg->config->miss_send_len;
 
     ofl_msg_free((struct ofl_msg_header *)msg, dp->exp);
@@ -141,7 +142,9 @@ handle_control_packet_out(struct datapath *dp, struct ofl_msg_packet_out *msg,
         buf = ofpbuf_new(0);
         ofpbuf_use(buf, msg->data, msg->data_length);
         ofpbuf_put_uninit(buf, msg->data_length);
-        pkt = packet_create(dp, msg->in_port, buf, true);
+        bool inner = false;
+        if(dp->config.flags==OFPC_MATCH_MODE)inner = true;
+        pkt = packet_create(dp, msg->in_port, buf, true, inner);
     } else {
         /* NOTE: in this case packet should not have data */
         pkt = dp_buffers_retrieve(dp->buffers, msg->buffer_id);

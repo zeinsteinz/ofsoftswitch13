@@ -92,10 +92,6 @@ static void
 set_field(struct packet *pkt, struct ofl_action_set_field *act )
 {
 	//fprintf(stdout,"enter set field\n");
-	//struct timespec tpstart;
-	//struct timespec tpend;
-    //long timedif;
-	//clock_gettime(CLOCK_MONOTONIC, &tpstart);
 
     packet_handle_std_validate(pkt->handle_std);
     if (pkt->handle_std->valid)
@@ -406,9 +402,6 @@ set_field(struct packet *pkt, struct ofl_action_set_field *act )
                 break;
         }
         //pkt->handle_std->valid = false;
-        //clock_gettime(CLOCK_MONOTONIC, &tpend);
-        //timedif = tpend.tv_nsec-tpstart.tv_nsec;
-        //fprintf(stdout, "%ld\n", timedif);
         return;
     }
 
@@ -707,10 +700,6 @@ pop_uctp(struct packet *pkt, struct ofl_action_header *act UNUSED){
 static void
 encap_uctp(struct packet *pkt, struct ofl_action_push *act){
 	//fprintf(stdout,"enter encap\n");
-	//struct timespec tpstart;
-	//struct timespec tpend;
-	//long timedif;
-	//clock_gettime(CLOCK_MONOTONIC, &tpstart);
 	// TODO Zoltan: if 802.3, check if new length is still valid
     packet_handle_std_validate(pkt->handle_std);
     if (pkt->handle_std->proto->ipv4 != NULL) {
@@ -732,9 +721,6 @@ encap_uctp(struct packet *pkt, struct ofl_action_push *act){
             // there is available space in headroom, move eth backwards
             pkt->buffer->data = (uint8_t *)(pkt->buffer->data) - move_count;
             pkt->buffer->size += move_count;
-
-            //fprintf(stderr,"data %d\n",(uint8_t *)(pkt->buffer->data));
-            //fprintf(stderr,"eth %d\n",(uint8_t *)eth);
 
             new_eth = (struct eth_header *)(pkt->buffer->data);
             new_ipv4 = (struct ip_header *)(pkt->buffer->data + ETH_HEADER_LEN);
@@ -802,10 +788,6 @@ encap_uctp(struct packet *pkt, struct ofl_action_push *act){
         pkt->handle_std->proto->uctp = push_uctp;
         pkt->handle_std->valid = true;
 
-        //clock_gettime(CLOCK_MONOTONIC, &tpend);
-        //timedif = tpend.tv_nsec-tpstart.tv_nsec;
-        //fprintf(stdout, "%ld\n", timedif);
-
     } else {
         VLOG_WARN_RL(LOG_MODULE, &rl, "Trying to execute encap uctp action on packet with no ip.");
     }
@@ -814,10 +796,6 @@ encap_uctp(struct packet *pkt, struct ofl_action_push *act){
 static void
 decap_uctp(struct packet *pkt, struct ofl_action_header *act UNUSED){
 	//fprintf(stdout,"process decap\n");
-	//struct timespec tpstart;
-	//struct timespec tpend;
-    //long timedif;
-	//clock_gettime(CLOCK_MONOTONIC, &tpstart);
 	packet_handle_std_validate(pkt->handle_std);
 	if (pkt->handle_std->proto->eth != NULL && pkt->handle_std->proto->uctp != NULL) {
 		//struct eth_header *eth = pkt->handle_std->proto->eth;
@@ -827,15 +805,20 @@ decap_uctp(struct packet *pkt, struct ofl_action_header *act UNUSED){
 		pkt->buffer->data = (uint8_t *)pkt->buffer->data + move_count;
 		pkt->buffer->size -= move_count;
 
-	    //clock_gettime(CLOCK_MONOTONIC, &tpend);
-	    //timedif = tpend.tv_nsec-tpstart.tv_nsec;
-	    //fprintf(stdout, "%ld\n", timedif);
 		//TODO Zoltan: revalidating might not be necessary in all cases
 		//pkt->handle_std->valid = false;
 	} else {
 		VLOG_WARN_RL(LOG_MODULE, &rl, "Trying to execute DECAP_UCTP action on packet with no uctp.");
 	}
 
+}
+
+static void
+inner_check(struct packet *pkt, struct ofl_action_header *act UNUSED){
+
+	pkt->handle_std->inner_check = true;
+	pkt->handle_std->valid = false;
+	packet_handle_std_validate(pkt->handle_std);
 }
 
 /*Executes set mpls ttl action.*/
@@ -1203,7 +1186,10 @@ dp_execute_action(struct packet *pkt,
             decap_uctp(pkt, action);
             break;
         }
-
+        case (OFPAT_INNER_CHECK): {
+        	inner_check(pkt, action);
+        	break;
+        }
         case (OFPAT_PUSH_MPLS): {
             push_mpls(pkt, (struct ofl_action_push *)action);
             break;

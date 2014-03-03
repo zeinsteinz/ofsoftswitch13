@@ -2032,7 +2032,6 @@ parse_action(uint16_t type, char *str, struct ofl_action_header **act) {
             break;
         }
 
-
         case (OFPAT_POP_UCTP):{
             struct ofl_action_header *a = xmalloc(sizeof(struct ofl_action_header));
             (*act) = a;
@@ -2042,6 +2041,11 @@ parse_action(uint16_t type, char *str, struct ofl_action_header **act) {
             struct ofl_action_header *a = xmalloc(sizeof(struct ofl_action_header));
             (*act) = a;
             break;
+        }
+        case (OFPAT_INNER_CHECK):{
+        	struct ofl_action_header *a = xmalloc(sizeof(struct ofl_action_header));
+        	(*act) = a;
+        	break;
         }
         case (OFPAT_POP_VLAN):
         case (OFPAT_POP_PBB): {

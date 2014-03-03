@@ -45,7 +45,7 @@
 
 struct packet *
 packet_create(struct datapath *dp, uint32_t in_port,
-    struct ofpbuf *buf, bool packet_out) {
+    struct ofpbuf *buf, bool packet_out, bool inner) {
     struct packet *pkt;
 
     pkt = xmalloc(sizeof(struct packet));
@@ -63,7 +63,7 @@ packet_create(struct datapath *dp, uint32_t in_port,
     pkt->buffer_id        = NO_BUFFER;
     pkt->table_id         = 0;
 
-    pkt->handle_std = packet_handle_std_create(pkt);
+    pkt->handle_std = packet_handle_std_create(pkt,inner);
     return pkt;
 }
 

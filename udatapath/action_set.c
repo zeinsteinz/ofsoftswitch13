@@ -85,6 +85,7 @@ action_set_order(struct ofl_action_header *act) {
         case (OFPAT_POP_UCTP):       return 20;
         case (OFPAT_ENCAP_UCTP):     return 30;
         case (OFPAT_DECAP_UCTP):     return 20;
+        case (OFPAT_INNER_CHECK):    return 20;
         case (OFPAT_PUSH_MPLS):      return 30;
         case (OFPAT_POP_MPLS):       return 20;
         case (OFPAT_SET_QUEUE):      return 70;

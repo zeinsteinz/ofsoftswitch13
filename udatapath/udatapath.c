@@ -175,9 +175,11 @@ udatapath_cmd(int argc, char *argv[])
     daemonize();
 
     for (;;) {
+
         dp_run(dp);
         dp_wait(dp);
         poll_block();
+
     }
 
     return 0;

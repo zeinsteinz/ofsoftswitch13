@@ -68,6 +68,7 @@ ofl_actions_ofp_len(struct ofl_action_header *action, struct ofl_exp *exp) {
         case OFPAT_POP_VLAN:
         case OFPAT_POP_UCTP:
         case OFPAT_DECAP_UCTP:
+        case OFPAT_INNER_CHECK:
         case OFPAT_POP_PBB:
             return sizeof(struct ofp_action_header);
         case OFPAT_POP_MPLS:
@@ -158,6 +159,7 @@ ofl_actions_pack(struct ofl_action_header *src, struct ofp_action_header *dst, u
         case OFPAT_POP_VLAN:
         case OFPAT_POP_UCTP:
         case OFPAT_DECAP_UCTP:
+        case OFPAT_INNER_CHECK:
         case OFPAT_POP_PBB: {
             struct ofp_action_header *da = (struct ofp_action_header *)dst;
 

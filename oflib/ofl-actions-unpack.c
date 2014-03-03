@@ -175,6 +175,7 @@ ofl_actions_unpack(struct ofp_action_header *src, size_t *len, struct ofl_action
         case OFPAT_POP_VLAN: 
         case OFPAT_POP_UCTP:
         case OFPAT_DECAP_UCTP:
+        case OFPAT_INNER_CHECK:
         case OFPAT_POP_PBB: {
             //ofp_action_header length was already checked
             *len -= sizeof(struct ofp_action_header);

@@ -68,7 +68,7 @@ struct packet {
 
 /* Creates a packet. */
 struct packet *
-packet_create(struct datapath *dp, uint32_t in_port, struct ofpbuf *buf, bool packet_out);
+packet_create(struct datapath *dp, uint32_t in_port, struct ofpbuf *buf, bool packet_out, bool inner);
 
 /* Converts the packet to a string representation. */
 char *

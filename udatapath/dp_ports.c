@@ -222,7 +222,9 @@ process_buffer(struct datapath *dp, struct sw_port *p, struct ofpbuf *buffer) {
     }
 
     // packet takes ownership of ofpbuf buffer
-    pkt = packet_create(dp, p->stats->port_no, buffer, false);
+    bool inner = false;
+    if(dp->config.flags==OFPC_MATCH_MODE)inner = true;
+    pkt = packet_create(dp, p->stats->port_no, buffer, false, inner);
     pipeline_process_packet(dp->pipeline, pkt);
 }
 
@@ -263,7 +265,11 @@ dp_ports_run(struct datapath *dp) {
             const int mtu = netdev_get_mtu(p->netdev);
             buffer = ofpbuf_new_with_headroom(hard_header + mtu, headroom);
         }
+        //struct timespec tt1, tt2;
+        //clock_gettime(CLOCK_REALTIME, &tt1);
         error = netdev_recv(p->netdev, buffer);
+        //clock_gettime(CLOCK_REALTIME, &tt2);
+        //fprintf(stderr,"tc: %ld\n",tt2.tv_nsec - tt1.tv_nsec);
         if (error == ENETDOWN){
             VLOG_ERR(LOG_MODULE, "Não tenho nada mas tô aqui...");
         }
@@ -622,6 +628,7 @@ dp_ports_output(struct datapath *dp, struct ofpbuf *buffer, uint32_t out_port,
             } else {
                 p->stats->tx_dropped++;
             }
+
         }
         /* NOTE: no need to delete buffer, it is deleted along with the packet in caller. */
         return;

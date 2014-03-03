@@ -114,6 +114,7 @@ ofl_action_print(FILE *stream, struct ofl_action_header *act, struct ofl_exp *ex
         case OFPAT_POP_VLAN:
         case OFPAT_POP_UCTP:
         case OFPAT_DECAP_UCTP:
+        case OFPAT_INNER_CHECK:
         case OFPAT_POP_PBB: {
             break;
         }

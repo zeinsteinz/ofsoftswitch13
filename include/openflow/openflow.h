@@ -467,6 +467,7 @@ enum ofp_action_type {
     OFPAT_POP_UCTP = 29,
     OFPAT_ENCAP_UCTP = 30,
     OFPAT_DECAP_UCTP = 31,
+    OFPAT_INNER_CHECK = 32,
     OFPAT_EXPERIMENTER = 0xffff
 };
 
@@ -620,6 +621,7 @@ enum ofp_config_flags {
     /* TTL processing - applicable for IP and MPLS packets */
     OFPC_INVALID_TTL_TO_CONTROLLER = 1 << 2, /* Send packets with invalid TTL
 to the controller */
+    OFPC_MATCH_MODE = 1 << 3,
 };
 
 /* Table numbering. Tables can use any number up to OFPT_MAX. */

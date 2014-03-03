@@ -61,6 +61,7 @@ ofl_actions_free(struct ofl_action_header *act, struct ofl_exp *exp) {
         case OFPAT_POP_UCTP:
         case OFPAT_ENCAP_UCTP:
         case OFPAT_DECAP_UCTP:
+        case OFPAT_INNER_CHECK:
         case OFPAT_PUSH_MPLS:
         case OFPAT_POP_MPLS:
         case OFPAT_PUSH_PBB:
