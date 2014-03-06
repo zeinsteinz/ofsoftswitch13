@@ -356,30 +356,30 @@ int nblink_extract_proto_fields(struct ofpbuf * pktin, _nbPDMLField * field, str
 
 int fast_parse(struct ofpbuf * pktin,  struct ofl_match * pktout, struct protocols_std * pkt_proto)
 {
-	if(*(uint32_t *)(pktin->data + 42)==0x800080)
+	pkt_proto->eth = (struct eth_header *)(pktin->data);
+	ofl_structs_match_put16(pktout, OXM_OF_ETH_TYPE, ntohs(pkt_proto->eth->eth_type));
+	if(pkt_proto->eth->eth_type==0x0008)
 	{
-		//fprintf(stderr,"find uctp\n");
-		pkt_proto->uctp = (struct uctp_header *)(pktin->data + 42);
-		//fprintf(stderr,"flag: %x\n",pkt_proto->uctp->uctp_flag);
-		//fprintf(stderr,"tag: %x\n",pkt_proto->uctp->uctp_tag);
-		ofl_structs_match_put32(pktout, OXM_OF_USER_FLAG, ntohl(pkt_proto->uctp->uctp_flag));
-		ofl_structs_match_put32(pktout, OXM_OF_USER_TAG, ntohl(pkt_proto->uctp->uctp_tag));
-
-		pkt_proto->eth = (struct eth_header *)(pktin->data);
-		ofl_structs_match_put16(pktout, OXM_OF_ETH_TYPE, ntohs(pkt_proto->eth->eth_type));
 		pkt_proto->ipv4 = (struct ip_header *)(pktin->data + 14);
-		pkt_proto->udp = (struct udp_header *)(pktin->data + 34);
+		if(pkt_proto->ipv4->ip_proto==17)
+		{
+			pkt_proto->udp = (struct udp_header *)(pktin->data + 34);
+			if(pkt_proto->udp->udp_dst==0xf0)
+			{
+				pkt_proto->uctp = (struct uctp_header *)(pktin->data + 42);
+				ofl_structs_match_put32(pktout, OXM_OF_USER_FLAG, ntohl(pkt_proto->uctp->uctp_flag));
+				ofl_structs_match_put32(pktout, OXM_OF_USER_TAG, ntohl(pkt_proto->uctp->uctp_tag));
+				return 1;
+			}
 
-		return 1;
+		}
 	}
-
 	return 0;
 }
 
 int outer_parse(struct ofpbuf * pktin,  struct ofl_match * pktout, struct protocols_std * pkt_proto)
 {
-	//if(offsite==0)
-	//	if(fast_parse(pktin, pktout, pkt_proto))return 1;
+	//if(fast_parse(pktin, pktout, pkt_proto))return 1;
 	pkt_proto->eth = (struct eth_header *)(pktin->data);
 	ofl_structs_match_put_eth(pktout, OXM_OF_ETH_DST,pkt_proto->eth->eth_dst);
 	ofl_structs_match_put_eth(pktout, OXM_OF_ETH_SRC,pkt_proto->eth->eth_src);
